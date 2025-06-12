@@ -1,0 +1,15 @@
+{
+  "privacy": {
+    "title": "Privacy Policy",
+    "description": "We are committed to safeguarding your privacy. This policy outlines how we collect, utilize, and protect your personal information with the utmost care.",
+    "section1": "Information We Collect",
+    "item1": "Your name and email address (provided during signup)",
+    "item2": "Usage data, including views, likes, and ratings",
+    "section2": "Use of Your Data",
+    "item3": "To enhance your user experience on our platform",
+    "item4": "To deliver service-related notifications and updates",
+    "section3": "Contact Us",
+    "contactText": "Reach out to us at {email}.",
+    "accept": "Accept"
+  }
+}

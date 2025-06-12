@@ -1,0 +1,34 @@
+{
+  "about": {
+    "hero": {
+      "title": "About RecipeRealm",
+      "description": "Welcome to RecipeRealm, a global platform for food lovers, home cooks, and culinary explorers! At RecipeRealm, we believe that food brings people together, tells stories, and connects cultures. We created this platform as a community-driven space where anyone, from passionate home chefs to curious beginners, can share their favorite recipes, discover new dishes, and learn from a diverse",
+      "imageAlt": "People cooking together",
+      "imageCaption": "Discover the joy of cooking together"
+    },
+    "features": {
+      "title": "Why RecipeRealm?",
+      "globalFlavors": {
+        "title": "Global Flavors",
+        "description": "Explore diverse recipes contributed by people from different cultures."
+      },
+      "communityDriven": {
+        "title": "Community Driven",
+        "description": "Engage with passionate cooks through comments, ratings, and sharing."
+      },
+      "inspiringCreativity": {
+        "title": "Inspiring Creativity",
+        "description": "Get inspired to try new dishes and create your own unique recipes."
+      }
+    },
+    "mission": {
+      "title": "Our Mission",
+      "description1": "We aim to make cooking accessible, fun, and creative for everyone. Whether you’re a beginner or a seasoned chef, RecipeRealm is your home for culinary exploration.",
+      "description2": "We believe that food connects us, and every dish tells a story. Our mission is to preserve culinary traditions, support creativity in the kitchen, and foster a global cooking community."
+    },
+    "testimonial": {
+      "quote": "“Thanks to RecipeRealm, I’ve rediscovered the joy of cooking and connected with people who love food as much as I do.”",
+      "author": "— Amina, RecipeRealm Member from Morocco"
+    }
+  }
+}

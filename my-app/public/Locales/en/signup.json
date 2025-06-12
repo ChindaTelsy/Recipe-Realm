@@ -1,0 +1,17 @@
+{
+  "signup": {
+    "title": "Sign Up for Recipes",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "placeholderUsername": "Enter your username",
+    "placeholderEmail": "Enter your email",
+    "placeholderPassword": "Enter your password",
+    "placeholderConfirmPassword": "Confirm your password",
+    "submit": "Sign Up",
+    "alreadyHaveAccount": "Already have an account?",
+    "login": "Login",
+    "passwordMismatch": "Passwords do not match!"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "login": {
+    "title": "Connectez Vous",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "placeholderUsername": "Entrez votre nom d'utilisateur",
+    "placeholderPassword": "Entrez votre mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "submit": "Se connecter",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "signUp": "Inscription"
+  }
+}

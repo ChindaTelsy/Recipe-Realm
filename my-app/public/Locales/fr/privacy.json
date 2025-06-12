@@ -1,0 +1,15 @@
+{
+  "privacy": {
+    "title": "Politique de Confidentialité",
+    "description": "Nous nous engageons à protéger votre vie privée. Cette politique explique comment nous collectons, utilisons et protégeons vos informations personnelles avec le plus grand soin.",
+    "section1": "Informations que Nous Collectons",
+    "item1": "Votre nom et adresse email (fournis lors de l'inscription)",
+    "item2": "Données d'utilisation, y compris les vues, les likes et les évaluations",
+    "section2": "Utilisation de Vos Données",
+    "item3": "Pour améliorer votre expérience utilisateur sur notre plateforme",
+    "item4": "Pour envoyer des notifications et mises à jour liées au service",
+    "section3": "Contactez-Nous",
+    "contactText": "Contactez-nous à {email}.",
+    "accept": "Accepter"
+  }
+}

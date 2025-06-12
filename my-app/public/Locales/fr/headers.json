@@ -1,0 +1,9 @@
+{
+  "header": {
+    "home": "Accueil",
+    "welcome": "Bienvenue",
+    "login": "Connexion",
+    "signup": "Inscription",
+    "toggleMenu": "Afficher le menu"
+  }
+}

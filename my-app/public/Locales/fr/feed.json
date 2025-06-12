@@ -1,0 +1,32 @@
+{
+  "categories": {
+    "title": "Filtrer",
+    "filterByCategory": "Filtrer par {{category}}",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "noResultsForCategory": "Aucune recette trouvée pour {{category}}",
+    "all": "Tous",
+    "northWest": "Nord-Ouest",
+    "southWest": "Sud-Ouest",
+    "littoral": "Littoral",
+    "centre": "Centre",
+    "farNorth": "Extrême-Nord",
+    "west": "Ouest",
+    "south": "Sud",
+    "north": "Nord",
+    "east": "Est",
+    "adamawa": "Adamaoua",
+    "westAfrica": "Afrique de l'Ouest",
+    "centralAfrica": "Afrique Centrale",
+    "northAfrica": "Afrique du Nord",
+    "southAfrica": "Afrique du Sud",
+    "vegetarian": "Végétarien",
+    "quickEasy": "Rapide & Facile",
+    "streetFood": "Street Food",
+    "international Cuisine": "Cuisine Internationale",
+    "snacks": "Collations",
+    "breakfasts": "Petits-déjeuners",
+    "desserts": "Desserts",
+    "drinks": "Boissons"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "header": {
+    "home": "Accueil",
+    "feed": "Fil",
+    "logout": "Déconnexion",
+    "welcome": "Bienvenue",
+    "searchPlaceholder": "Rechercher des recettes...",
+    "toggleSearch": "Basculer la recherche",
+    "toggleMenu": "Basculer le menu"
+  }
+}

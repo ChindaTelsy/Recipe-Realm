@@ -1,0 +1,36 @@
+{
+  "profile": {
+    "noProfileTitle": "No Profile Found",
+    "noProfileMessage": "Please log in or sign up to view your profile.",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "or": "or",
+    "imageAlt": "Profile Image",
+    "changeImage": "Change Image",
+    "name": "Name",
+    "bio": "Bio",
+    "noBio": "No bio provided",
+    "location": "Location",
+    "noLocation": "No location provided",
+    "joined": "Joined",
+    "edit": "Edit Profile",
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "stats": {
+      "recipes": "Recipes",
+      "likes": "Likes",
+      "avgRating": "Average Rating"
+    },
+    "tabs": {
+      "myRecipes": "My Recipes",
+      "likedRecipes": "Liked Recipes"
+    }
+  },
+  "auth": {
+    "login": "Log In",
+    "signup": "Sign Up"
+  },
+  "general": {
+    "or": "or"
+  }
+}

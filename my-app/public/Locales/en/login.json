@@ -1,0 +1,14 @@
+{
+  "login": {
+    "title": "Log In to Your Account",
+    "username": "Username",
+    "password": "Password",
+    "placeholderUsername": "Enter your username",
+    "placeholderPassword": "Enter your password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "submit": "Log In",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up"
+  }
+}

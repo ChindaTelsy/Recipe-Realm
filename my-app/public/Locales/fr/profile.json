@@ -1,0 +1,36 @@
+{
+  "profile": {
+    "noProfileTitle": "Aucun Profil Trouvé",
+    "noProfileMessage": "Veuillez vous connecter ou vous inscrire pour voir votre profil.",
+    "login": "Se Connecter",
+    "signup": "S'Inscrire",
+    "or": "ou",
+    "imageAlt": "Image de Profil",
+    "changeImage": "Changer l'Image",
+    "name": "Nom",
+    "bio": "Bio",
+    "noBio": "Aucune bio fournie",
+    "location": "Emplacement",
+    "noLocation": "Aucun emplacement fourni",
+    "joined": "Inscrit",
+    "edit": "Modifier le Profil",
+    "save": "Enregistrer les Modifications",
+    "cancel": "Annuler",
+    "stats": {
+      "recipes": "Recettes",
+      "likes": "J'aime",
+      "avgRating": "Note Moyenne"
+    },
+    "tabs": {
+      "myRecipes": "Mes Recettes",
+      "likedRecipes": "Recettes Aimées"
+    }
+  },
+  "auth": {
+    "login": "Se Connecter",
+    "signup": "S'Inscrire"
+  },
+  "general": {
+    "or": "ou"
+  }
+}

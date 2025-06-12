@@ -1,0 +1,17 @@
+{
+  "signup": {
+    "title": "Inscription aux recettes",
+    "username": "Nom d'utilisateur",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "placeholderUsername": "Entrez votre nom d'utilisateur",
+    "placeholderEmail": "Entrez votre adresse email",
+    "placeholderPassword": "Entrez votre mot de passe",
+    "placeholderConfirmPassword": "Confirmez votre mot de passe",
+    "submit": "S'inscrire",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "login": "Se connecter",
+    "passwordMismatch": "Les mots de passe ne correspondent pas !"
+  }
+}

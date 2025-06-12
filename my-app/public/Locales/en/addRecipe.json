@@ -1,0 +1,51 @@
+{
+  "addRecipe": {
+    "title": "Add a New Recipe",
+    "alertFileTooLarge": "File size exceeds 5MB limit!",
+    "alertMissingFields": "Please fill in all required fields!",
+    "alertSubmitted": "Recipe submitted successfully!",
+    "form": {
+      "title": "Recipe Title",
+      "titlePlaceholder": "Enter recipe title",
+      "description": "Description",
+      "descriptionPlaceholder": "Enter recipe description",
+      "ingredients": "Ingredients",
+      "ingredientsPlaceholder": "Enter ingredients (comma-separated)",
+      "instructions": "Instructions",
+      "stepLabel": "Step {{number}}",
+      "stepPlaceholder": "Enter details for Step {{number}}",
+      "addStep": "Add Step",
+      "removeStep": "Remove step",
+      "category": "Category",
+      "selectCategory": "Select a category",
+      "minPrice": "Estimated Minimum Cost",
+      "minPricePlaceholder": "e.g., {{currency}}",
+      "image": "Upload Image",
+      "chooseImage": "Choose an image",
+      "submit": "Submit Recipe"
+    },
+    "categories": {
+      "northWest": "North West",
+      "southWest": "South West",
+      "littoral": "Littoral",
+      "centre": "Centre",
+      "farNorth": "Far North",
+      "west": "West",
+      "south": "South",
+      "north": "North",
+      "east": "East",
+      "adamawa": "Adamawa",
+      "westAfrican": "West African",
+      "centralAfrican": "Central African",
+      "northAfrican": "North African",
+      "vegetarian": "Vegetarian",
+      "quickEasy": "Quick & Easy",
+      "streetFood": "Street Food",
+      "international": "International",
+      "snacks": "Snacks",
+      "breakfasts": "Breakfasts",
+      "desserts": "Desserts",
+      "drinks": "Drinks"
+    }
+  }
+}

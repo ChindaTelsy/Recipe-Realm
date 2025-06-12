@@ -1,0 +1,29 @@
+{
+  "welcome": {
+    "welcomeTitle": "Bienvenue sur RecipeRealm",
+    "welcomeDescription": "Votre voyage savoureux commence ici, dans le royaume de la création de chaque cuisinier. Transformez les ingrédients en inspirations. Découvrez, créez et partagez des recettes qui rassemblent les gens.",
+    "featuredDishAlt": "Image du Plat en Vedette",
+    "searchPlaceholder": "Rechercher des recettes...",
+    "clearSearch": "Effacer la recherche",
+    "searchResults": "Résultats de la recherche",
+    "noResultsFound": "Aucune recette trouvée",
+    "recommendedRecipes": "Recettes Recommandées",
+    "loadingRecipes": "Chargement des recettes...",
+    "errorFetchingRecipes": "Erreur lors de la récupération des recettes : {{error}}",
+    "noRecommendedRecipes": "Aucune recette recommandée disponible.",
+    "previousRecipes": "Recettes Précédentes",
+    "nextRecipes": "Recettes Suivantes",
+    "latestRecipes": "Recettes Récentes",
+    "exploreByRegion": "Explorer Par Région",
+    "northWest": "Nord-Ouest",
+    "southWest": "Sud-Ouest",
+    "littoral": "Littoral",
+    "centre": "Centre",
+    "farNorth": "Extrême-Nord",
+    "west": "Ouest",
+    "south": "Sud",
+    "north": "Nord",
+    "east": "Est",
+    "adamawa": "Adamaoua"
+  }
+}

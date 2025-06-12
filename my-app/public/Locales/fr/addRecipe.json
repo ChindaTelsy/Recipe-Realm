@@ -1,0 +1,51 @@
+{
+  "addRecipe": {
+    "title": "Ajouter une nouvelle recette",
+    "alertFileTooLarge": "La taille du fichier dépasse la limite de 5 Mo !",
+    "alertMissingFields": "Veuillez remplir tous les champs requis !",
+    "alertSubmitted": "Recette soumise avec succès !",
+    "form": {
+      "title": "Titre de la recette",
+      "titlePlaceholder": "Entrez le titre de la recette",
+      "description": "Description",
+      "descriptionPlaceholder": "Entrez la description de la recette",
+      "ingredients": "Ingrédients",
+      "ingredientsPlaceholder": "Entrez les ingrédients (séparés par des virgules)",
+      "instructions": "Instructions",
+      "stepLabel": "Étape {{number}}",
+      "stepPlaceholder": "Entrez les détails pour l'étape {{number}}",
+      "addStep": "Ajouter une étape",
+      "removeStep": "Supprimer l'étape",
+      "category": "Catégorie",
+      "selectCategory": "Sélectionnez une catégorie",
+      "minPrice": "Coût minimum estimé",
+      "minPricePlaceholder": "ex. {{currency}}",
+      "image": "Télécharger une image",
+      "chooseImage": "Choisir une image",
+      "submit": "Soumettre la recette"
+    },
+    "categories": {
+      "northWest": "Nord-Ouest",
+      "southWest": "Sud-Ouest",
+      "littoral": "Littoral",
+      "centre": "Centre",
+      "farNorth": "Extrême-Nord",
+      "west": "Ouest",
+      "south": "Sud",
+      "north": "Nord",
+      "east": "Est",
+      "adamawa": "Adamaoua",
+      "westAfrican": "Afrique de l'Ouest",
+      "centralAfrican": "Afrique centrale",
+      "northAfrican": "Afrique du Nord",
+      "vegetarian": "Végétarien",
+      "quickEasy": "Rapide et facile",
+      "streetFood": "Street Food",
+      "international": "International",
+      "snacks": "Colations",
+      "breakfasts": "Petits-déjeuners",
+      "desserts": "Desserts",
+      "drinks": "Boissons"
+    }
+  }
+}

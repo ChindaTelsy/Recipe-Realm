@@ -1,0 +1,34 @@
+{
+  "about": {
+    "hero": {
+      "title": "À propos de RecipeRealm",
+      "description": "Bienvenue sur RecipeRealm, une plateforme mondiale pour les amateurs de cuisine, les cuisiniers amateurs et les explorateurs culinaires ! Chez RecipeRealm, nous croyons que la nourriture rapproche les gens, raconte des histoires et connecte les cultures. Nous avons créé cette plateforme comme un espace communautaire où chacun, des chefs amateurs passionnés aux débutants curieux, peut partager ses recettes préférées, découvrir de nouveaux plats et apprendre d'une diversité",
+      "imageAlt": "Des gens cuisinant ensemble",
+      "imageCaption": "Découvrez la joie de cuisiner ensemble"
+    },
+    "features": {
+      "title": "Pourquoi RecipeRealm ?",
+      "globalFlavors": {
+        "title": "Saveurs Mondiales",
+        "description": "Explorez des recettes variées contribuées par des personnes de différentes cultures."
+      },
+      "communityDriven": {
+        "title": "Communauté Animée",
+        "description": "Interagissez avec des cuisiniers passionnés via des commentaires, des évaluations et le partage."
+      },
+      "inspiringCreativity": {
+        "title": "Inspirer la Créativité",
+        "description": "Laissez-vous inspirer pour essayer de nouveaux plats et créer vos propres recettes uniques."
+      }
+    },
+    "mission": {
+      "title": "Notre Mission",
+      "description1": "Nous visons à rendre la cuisine accessible, amusante et créative pour tous. Que vous soyez débutant ou chef expérimenté, RecipeRealm est votre maison pour l'exploration culinaire.",
+      "description2": "Nous croyons que la nourriture nous connecte, et chaque plat raconte une histoire. Notre mission est de préserver les traditions culinaires, de soutenir la créativité en cuisine et de favoriser une communauté culinaire mondiale."
+    },
+    "testimonial": {
+      "quote": "« Grâce à RecipeRealm, j’ai redécouvert la joie de cuisiner et j’ai connecté avec des personnes qui aiment la nourriture autant que moi. »",
+      "author": "— Amina, Membre de RecipeRealm du Maroc"
+    }
+  }
+}

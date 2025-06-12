@@ -1,0 +1,9 @@
+{
+  "header": {
+    "home": "Home",
+    "welcome": "Welcome",
+    "login": "Login",
+    "signup": "Sign Up",
+    "toggleMenu": "Toggle menu"
+  }
+}

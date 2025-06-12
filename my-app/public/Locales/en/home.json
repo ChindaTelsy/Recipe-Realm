@@ -1,0 +1,29 @@
+{
+  "home": {
+    "homeOfRecipes": "Home Of Recipes",
+    "welcomeDescription": "Your flavorful journey starts here at the kingdom of every cook’s creation. Turn Ingredients into inspirations. Discover, create, and share recipes that bring people together.",
+    "featuredDishAlt": "Featured Dish Image",
+    "searchPlaceholder": "Search recipes...",
+    "clearSearch": "Clear search",
+    "searchResults": "Search Results",
+    "noResultsFound": "No recipes found",
+    "recommendedRecipes": "Recommended Recipes",
+    "loadingRecipes": "Loading recipes...",
+    "errorFetchingRecipes": "Error fetching recipes: {{error}}",
+    "noRecommendedRecipes": "No recommended recipes available.",
+    "previousRecipes": "Previous Recipes",
+    "nextRecipes": "Next Recipes",
+    "latestRecipes": "Latest Recipes",
+    "exploreByRegion": "Explore by Region",
+    "northWest": "North West",
+    "southWest": "South West",
+    "littoral": "Littoral",
+    "centre": "Centre",
+    "farNorth": "Far North",
+    "west": "West",
+    "south": "South",
+    "north": "North",
+    "east": "East",
+    "adamawa": "Adamawa"
+  }
+}
