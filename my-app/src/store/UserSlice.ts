@@ -50,24 +50,22 @@ interface RegisterCredentials {
   password_confirmation: string;
 }
 
-// Utility function for localStorage hydration
+// Utility
 function getFromLocalStorage<T>(key: string): T | null {
   if (typeof window === 'undefined') return null;
   const value = localStorage.getItem(key);
   return value ? JSON.parse(value) : null;
 }
 
-// Safe token and region access
-const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-const storedRegion = typeof window !== 'undefined' ? localStorage.getItem('userRegion') ?? 'Centre' : 'Centre';
-const storedUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null;
-
-// const storedUser = getFromLocalStorage<User>('user');
+const isClient = typeof window !== 'undefined';
+const storedUser = isClient ? getFromLocalStorage<User>('user') : null;
+const storedToken = isClient ? localStorage.getItem('token') : null;
+const storedRegion = isClient ? localStorage.getItem('userRegion') ?? 'Centre' : 'Centre';
 
 const initialState: UserState = {
   user: storedUser || null,
   token: storedToken || null,
-  isAuthenticated: !!storedToken && !!storedUser,
+  isAuthenticated: !!storedUser && !!storedToken,
   loading: false,
   status: 'idle',
   error: null,
@@ -75,50 +73,59 @@ const initialState: UserState = {
   consent: false,
 };
 
-
-
+// Async Thunks
 export const login = createAsyncThunk<
   { user: User; token: string },
   LoginCredentials,
   { rejectValue: string }
 >('user/login', async ({ email, password }, { rejectWithValue }) => {
   try {
-    console.log('Attempting login with:', { email });
-    const response = await axios.post('/login', { email, password }); // Updated to /api/auth/login
+    const response = await axios.post('/login', { email, password });
     const { user, token } = response.data;
+
     const processedUser = {
       ...user,
       joinDate: user.joinDate instanceof Date ? user.joinDate.toISOString() : user.joinDate,
     };
+
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(processedUser));
-    console.log('Login successful, stored token and user');
+
+    console.log('Login successful, token and user stored');
     return { user: processedUser, token };
   } catch (error: any) {
-    console.error('Login failed:', error.response?.data);
-    error.response?.data?.message.includes("password")
-          ? "Incorrect password"
-          : error.response?.data?.message || "Login failed";
-    return rejectWithValue(error.response?.data?.message || 'Login failed');
+    const message = error.response?.data?.message?.includes("password")
+      ? "Incorrect password"
+      : error.response?.data?.message || "Login failed";
+    return rejectWithValue(message);
   }
 });
 
-export const fetchUser = createAsyncThunk('user/fetchUser', async (_, { getState, rejectWithValue }) => {
-  const state = getState() as { user: UserState };
-  const token = state.user.token || localStorage.getItem('token');
-  if (!token) {
-    return rejectWithValue('No token found');
-  }
+export const fetchUser = createAsyncThunk(
+  'user/fetchUser',
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState() as { user: UserState };
+    const token = state.user.token || localStorage.getItem('token');
 
-  try {
-    const response = await axios.get('/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return response.data;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || 'Failed to fetch user');
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+
+    try {
+      const response = await axios.get('/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const user = response.data?.data ?? response.data;  // <--- unwrap data here
+      console.log('✅ fetchUser response:', user);
+      return user;
+    } catch (error: any) {
+      console.error('❌ fetchUser error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch user');
+    }
   }
-});
+);
+
 
 export const register = createAsyncThunk<
   { user: User; token: string },
@@ -231,16 +238,34 @@ const userSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action) => {
-        state.loading = false;
+      // .addCase(login.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.user = action.payload.user;
+      //   state.token = action.payload.token;
+      //   state.isAuthenticated = true;
+      // })
+      // .addCase(login.rejected, (state, action) => {
+      //   state.loading = false;
+      //   state.error = action.payload as string;
+      // })
+       .addCase(login.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        state.status = 'succeeded';
+
+        localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('user', JSON.stringify(action.payload.user));
       })
       .addCase(login.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        state.status = 'failed';
+        state.error = action.payload || 'Login failed';
       })
+      // .addCase(login.pending, (state) => {
+      //   state.status = 'loading';
+      //   state.error = null;
+      // })
+     
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -269,57 +294,16 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      .addCase(fetchUser.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
-      })
-      .addCase(fetchUser.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.user = {
-          ...action.payload,
-          recipes: action.payload.recipes?.map((recipe: any) => ({
-            id: recipe.id.toString(),
-            title: recipe.title,
-            description: recipe.description,
-            ingredients: JSON.parse(recipe.ingredients),
-            steps: JSON.parse(recipe.steps),
-            category_id: recipe.category_id.toString(),
-            region_id: recipe.region_id.toString(),
-            min_price: parseFloat(recipe.min_price),
-            cook_time: recipe.cook_time,
-            prep_time: recipe.prep_time,
-            image: recipe.image_path,
-            userId: recipe.user_id.toString(),
-            user_name: recipe.user_name || action.payload.name, // Use user_name or fallback to user.name
-            visibleOn: recipe.visible_on,
-            rating: recipe.rating || 0,
-            region: recipe.region?.name || '',
-          })),
-          likedRecipes: action.payload.likedRecipes?.map((recipe: any) => ({
-            id: recipe.id.toString(),
-            title: recipe.title,
-            description: recipe.description,
-            ingredients: JSON.parse(recipe.ingredients),
-            steps: JSON.parse(recipe.steps),
-            category_id: recipe.category_id.toString(),
-            region_id: recipe.region_id.toString(),
-            min_price: parseFloat(recipe.min_price),
-            cook_time: recipe.cook_time,
-            prep_time: recipe.prep_time,
-            image: recipe.image_path,
-            userId: recipe.user_id.toString(),
-            user_name: recipe.user_name || action.payload.name,
-            visibleOn: recipe.visible_on,
-            rating: recipe.rating || 0,
-            region: recipe.region?.name || '',
-          })),
-        };
-        state.error = null;
-      })
-      .addCase(fetchUser.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload as string;
-      });
+     .addCase(fetchUser.fulfilled, (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+      state.status = 'succeeded';
+    })
+    .addCase(fetchUser.rejected, (state, action) => {
+      state.status = 'failed';
+      state.error = action.payload as string;
+    });
+    
       
   },
 });

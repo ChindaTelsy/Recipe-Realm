@@ -7,7 +7,7 @@ import RecipeCard from '@/components/RecipeCard';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { toggleLike, setRating, setRecommendedRecipes, fetchRecipesThunk,fetchUserRecipesThunk } from '@/store/RecipeSlice';
+import { toggleLike, setRating, setRecommendedRecipes, fetchRecipesThunk } from '@/store/RecipeSlice';
 import { useTranslation } from 'react-i18next';
 import RecipeCardHorizontal from '@/components/RecipeCardHorz';
 import { fetchUser } from '@/store/UserSlice';
@@ -41,8 +41,8 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
   const [isSearchMode, setIsSearchMode] = useState(false);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userId, setUserId] = useState<string | null>(null);
+const isAuthenticated = !!localStorage.getItem('token');
+
 
   useEffect(() => {
     dispatch(fetchUser());
@@ -55,20 +55,10 @@ export default function HomePage() {
 
   const categoryParam = searchParams.get('category') || 'all';
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      console.log("================================================= Fetching recipes for authenticated user ===============================");
-      
-      dispatch(fetchRecipesThunk({ isAuthenticated }));
-      if (userId) {
-        dispatch(fetchUserRecipesThunk(userId));
-      }
-    } else {
-            console.log("================================================= Fetching recipes for authenticated user 12345 ===============================");
 
-      dispatch(fetchRecipesThunk({ isAuthenticated }));
-    }
-  }, [dispatch, isAuthenticated, userId]);
+  useEffect(() => {
+    dispatch(fetchRecipesThunk({ isAuthenticated }));
+  }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());

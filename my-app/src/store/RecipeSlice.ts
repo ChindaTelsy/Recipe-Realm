@@ -850,24 +850,27 @@ export const fetchRecipesThunk = createAsyncThunk(
       console.log('Fetching recipes with isAuthenticated:', isAuthenticated);
       if (isAuthenticated) {
         const token = localStorage.getItem('token');
-        console.log('Fetching recipes with token 111111111111111111111111:', token);
-        
+        console.log('Token:', token);
         if (!token) {
-          console.log("no token 133333333333999000")
+          console.log('No token found');
           return rejectWithValue('No authentication token found. Please log in.');
         }
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const payload = isAuthenticated ? {} : { public: true };
-      const response = await axios.post('/recipes', payload, { headers });
-      if (!Array.isArray(response.data)) {
-        console.log("333333333333333333333333333 33333333333333333333333333333");
-        
+      // Use GET instead of POST
+      const response = await axios.get(isAuthenticated ? '/recipes' : '/recipes?public=true', { headers });
+      console.log('Raw response:', response.data);
+
+      // Adjust based on actual response structure
+      const recipes = Array.isArray(response.data) ? response.data : response.data.recipes;
+      if (!Array.isArray(recipes)) {
+        console.log('Invalid response format');
         return rejectWithValue('Invalid response format: Expected an array of recipes');
       }
-      console.log('Fetched recipes#################################################:', response.data);
-      return response.data.map((recipe: any) => ({
+
+      console.log('Fetched recipes:', recipes);
+      return recipes.map((recipe: any) => ({
         id: String(recipe.id),
         title: recipe.title || '',
         description: recipe.description || '',
@@ -878,10 +881,14 @@ export const fetchRecipesThunk = createAsyncThunk(
           : null,
         ingredients: Array.isArray(recipe.ingredients)
           ? recipe.ingredients
-          : JSON.parse(recipe.ingredients || '[]'),
+          : typeof recipe.ingredients === 'string'
+            ? JSON.parse(recipe.ingredients || '[]')
+            : [],
         steps: Array.isArray(recipe.steps)
           ? recipe.steps
-          : JSON.parse(recipe.steps || '[]'),
+          : typeof recipe.steps === 'string'
+            ? JSON.parse(recipe.steps || '[]')
+            : [],
         category: recipe.category?.name || recipe.category_id?.toString() || '',
         region: recipe.region?.name || recipe.region_id?.toString() || 'unknown',
         minPrice: recipe.min_price?.toString() || '0',
@@ -916,10 +923,19 @@ export const fetchUserRecipesThunk = createAsyncThunk(
   'recipes/fetchUserRecipes',
   async (userId: string, { rejectWithValue }) => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return rejectWithValue('No authentication token found. Please log in.');
+      }
       const response = await axios.get(`/users/${userId}/recipes`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.map((recipe: any) => ({
+      console.log('User recipes response:', response.data);
+      const recipes = Array.isArray(response.data) ? response.data : response.data.recipes;
+      if (!Array.isArray(recipes)) {
+        return rejectWithValue('Invalid response format: Expected an array of recipes');
+      }
+      return recipes.map((recipe: any) => ({
         id: String(recipe.id),
         title: recipe.title || '',
         description: recipe.description || '',
@@ -930,10 +946,14 @@ export const fetchUserRecipesThunk = createAsyncThunk(
           : null,
         ingredients: Array.isArray(recipe.ingredients)
           ? recipe.ingredients
-          : JSON.parse(recipe.ingredients || '[]'),
+          : typeof recipe.ingredients === 'string'
+            ? JSON.parse(recipe.ingredients || '[]')
+            : [],
         steps: Array.isArray(recipe.steps)
           ? recipe.steps
-          : JSON.parse(recipe.steps || '[]'),
+          : typeof recipe.steps === 'string'
+            ? JSON.parse(recipe.steps || '[]')
+            : [],
         category: recipe.category?.name || recipe.category_id?.toString() || '',
         region: recipe.region?.name || recipe.region_id?.toString() || 'unknown',
         minPrice: recipe.min_price?.toString() || '0',
@@ -946,7 +966,14 @@ export const fetchUserRecipesThunk = createAsyncThunk(
         visibleOn: recipe.visible_on || 'both',
       }));
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch user recipes');
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Failed to fetch user recipes';
+      console.error('Error fetching user recipes:', {
+        message: errorMessage,
+        statusCode: error.response?.status,
+        responseData: error.response?.data,
+      });
+      return rejectWithValue(errorMessage);
     }
   }
 );

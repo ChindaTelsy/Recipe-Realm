@@ -12,7 +12,7 @@ import { ThunkDispatch } from 'redux-thunk';
 import { toast } from 'react-toastify';
 import { AnyAction } from '@reduxjs/toolkit';
 import { FaUserCircle } from 'react-icons/fa';
-import { deleteRecipeThunk, addRecipeThunk} from '@/store/RecipeSlice';
+import { deleteRecipeThunk } from '@/store/RecipeSlice';
 import { Recipe } from '@/model/Recipe';
 
 export default function ProfilePage() {
@@ -28,30 +28,45 @@ export default function ProfilePage() {
   const [editLocation, setEditLocation] = useState(user?.location || '');
   const [isUploading, setIsUploading] = useState(false);
   const stats = user?.stats || { recipes: 0, likes: 0, avgRating: 0 };
+  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    if (isAuthenticated && !user) {
       dispatch(fetchUser());
     }
-  }, [dispatch]);
+  }, [isAuthenticated, user, dispatch]);
 
-  
+
+
+  useEffect(() => {
+    if (!user) {
+      dispatch(fetchUser());
+    }
+  }, [dispatch, user]);
+
+
+  useEffect(() => {
+    console.log('User state:', user, 'Stats:', user?.stats, 'Recipes:', user?.recipes, 'Liked Recipes:', user?.likedRecipes);
+  }, [user]);
+
+
   const formattedJoinDate = useMemo(() => {
     if (!user?.joinDate) return t('profile.noDate');
     const date = new Date(user.joinDate);
     return isNaN(date.getTime())
       ? t('profile.noDate')
       : new Intl.DateTimeFormat('fr-FR', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }).format(date);
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }).format(date);
   }, [user?.joinDate, t]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) {
+    const authToken = token || localStorage.getItem('token');
+
+    if (!file || !user || !authToken) {
       toast.error(t('profile.noFileOrUser'));
       return;
     }
@@ -65,7 +80,7 @@ export default function ProfilePage() {
       const response = await axios.post('/profile/upload-image', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
 
@@ -82,7 +97,8 @@ export default function ProfilePage() {
   };
 
   const saveProfile = async () => {
-    if (!user || !token) return;
+    const authToken = token || localStorage.getItem('token');
+    if (!user || !authToken) return;
 
     try {
       const response = await axios.put(
@@ -92,7 +108,7 @@ export default function ProfilePage() {
           bio: editBio,
           location: editLocation,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${authToken}` } }
       );
 
       dispatch(setUser({ ...user, ...response.data }));
@@ -105,12 +121,14 @@ export default function ProfilePage() {
   };
 
   const handleDelete = (recipeId: string) => {
-    if (!token) {
+    const authToken = token || localStorage.getItem('token');
+    if (!authToken) {
       toast.error(t('profile.loginRequired'));
       return;
     }
     if (!confirm(t('profile.confirmDelete'))) return;
-    dispatch(deleteRecipeThunk({ recipeId, token }))
+
+    dispatch(deleteRecipeThunk({ recipeId, token: authToken }))
       .then(() => {
         dispatch(fetchUser());
         toast.success(t('profile.recipeDeleted'));
@@ -222,40 +240,36 @@ export default function ProfilePage() {
           </div>
 
           {/* Stats Section */}
-          {user.stats && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-              {[
-                { value: user.stats.recipes, label: t('profile.stats.recipes'), icon: '🍽️' },
-                { value: user.stats.likes, label: t('profile.stats.likes'), icon: '❤️' },
-                { value: user.stats.avgRating.toFixed(1), label: t('profile.stats.avgRating'), icon: '⭐' },
-              ].map((stat, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center p-6 bg-white/50 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 hover:scale-105 transition-transform"
-                >
-                  <span className="text-3xl mb-2">{stat.icon}</span>
-                  <p className="text-2xl font-extrabold text-orange-600">{stat.value}</p>
-                  <p className="text-sm text-gray-600">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+            {[
+              { value: stats.recipes, label: t('profile.stats.recipes'), icon: '🍽️' },
+              { value: stats.likes, label: t('profile.stats.likes'), icon: '❤️' },
+              { value: stats.avgRating.toFixed(1), label: t('profile.stats.avgRating'), icon: '⭐' },
+            ].map((stat, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-center p-6 bg-white/50 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 hover:scale-105 transition-transform"
+              >
+                <span className="text-3xl mb-2">{stat.icon}</span>
+                <p className="text-2xl font-extrabold text-orange-600">{stat.value}</p>
+                <p className="text-sm text-gray-600">{stat.label}</p>
+              </div>
+            ))}
+          </div>
 
           {/* Tabs */}
           <div className="relative flex justify-center mb-8">
             <div className="inline-flex bg-white/50 backdrop-blur-md rounded-full p-1 border border-white/20">
               <button
-                className={`px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
-                  activeTab === 'my' ? 'bg-orange-600 text-white shadow-md' : 'text-gray-600 hover:text-orange-600'
-                }`}
+                className={`px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${activeTab === 'my' ? 'bg-orange-600 text-white shadow-md' : 'text-gray-600 hover:text-orange-600'
+                  }`}
                 onClick={() => setActiveTab('my')}
               >
                 {t('profile.tabs.myRecipes')}
               </button>
               <button
-                className={`px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
-                  activeTab === 'liked' ? 'bg-orange-600 text-white shadow-md' : 'text-gray-600 hover:text-orange-600'
-                }`}
+                className={`px-6 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${activeTab === 'liked' ? 'bg-orange-600 text-white shadow-md' : 'text-gray-600 hover:text-orange-600'
+                  }`}
                 onClick={() => setActiveTab('liked')}
               >
                 {t('profile.tabs.likedRecipes')}
