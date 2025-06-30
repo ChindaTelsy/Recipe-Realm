@@ -1,12 +1,14 @@
 {
   "login": {
     "title": "Connectez Vous",
-    "username": "Nom d'utilisateur",
+    "email": "Email",
     "password": "Mot de passe",
-    "placeholderUsername": "Entrez votre nom d'utilisateur",
+    "placeholderEmail": "Entrez votre email",
     "placeholderPassword": "Entrez votre mot de passe",
     "rememberMe": "Se souvenir de moi",
     "forgotPassword": "Mot de passe oublié ?",
+    "loading": "Connexion en cours...",
+    "alertInvalidCredentials": "Email ou mot de passe invalide. Veuillez réessayer.",
     "submit": "Se connecter",
     "noAccount": "Vous n'avez pas de compte ?",
     "signUp": "Inscription"

@@ -25,3 +25,4 @@ export const metadata = {
 export default function Home() {
   redirect('/Welcomepage'); // Redirect to the Welcome page
 }
+

@@ -39,13 +39,16 @@ export default function Header() {
         {/* Logo */}
         <div className="flex items-center">
           <Link href="/">
-            <Image
+            {/* <Image
               src="/images/RecipeRealm.png"
               alt="RecipeRealm Logo"
               width={90}
               height={60}
               className="object-contain"
-            />
+            /> */}
+
+            <img src="/images/RecipeRealm.png" alt="Logo" width={90} height={60} />
+
           </Link>
         </div>
 

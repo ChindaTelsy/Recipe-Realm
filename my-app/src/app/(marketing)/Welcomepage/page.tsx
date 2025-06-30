@@ -1,14 +1,13 @@
-"use client";
+'use client';
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
-import Image from 'next/image';
-import RecipeCard from '@/components/RecipeCard';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
 import { toggleLike, setRating, setRecommendedRecipes } from '@/store/RecipeSlice';
 import { useTranslation } from 'react-i18next';
+import RecipeCard from '@/components/RecipeCard';
 import RecipeCardHorizontal from '@/components/RecipeCardHorz';
 import useDebounce from '@/hooks/UseDebounce';
 
@@ -35,39 +34,42 @@ const images = [
   '/images/drink.avif',
 ];
 
+const FALLBACK_IMAGE = '/images/placeholder.jpg'; // Placeholder image for fallbacks
+
 export default function Welcomepage() {
-  const { t } = useTranslation("welcome");
+  const { t } = useTranslation('welcome');
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
 
   const user = useSelector((state: RootState) => state.user.user);
-  const userRegion = user?.location ?? 'centre';
-  const { recommendedRecipes, status, error } = useSelector((state: RootState) => state.recipes);
+  const userRegion = user?.location?.toLowerCase() ?? 'centre';
+  const { recommendedRecipes, recipes } = useSelector((state: RootState) => state.recipes);
 
   const [index, setIndex] = useState(0);
   const [recommendedRecipeIndex, setRecommendedRecipeIndex] = useState(0);
   const [latestRecipeIndex, setLatestRecipeIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('query') || '');
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const debouncedSearchQuery = useDebounce(searchQuery, 300); // 300ms delay
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  useEffect(() => {
+    dispatch(setRecommendedRecipes(userRegion));
+  }, [dispatch, userRegion]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % images.length);
     }, 4000);
-
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    setIsSearchMode(!!debouncedSearchQuery); // Enable search mode when query exists, disable when empty
+    setIsSearchMode(!!debouncedSearchQuery);
   }, [debouncedSearchQuery]);
 
-  const recipes = useSelector((state: RootState) => state.recipes.recipes);
   const categoryParam = searchParams.get('category') || 'all';
 
-  // Update URL when debounced search query changes
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
     if (debouncedSearchQuery) {
@@ -89,19 +91,19 @@ export default function Welcomepage() {
     SouthWest: 'southwest',
     Littoral: 'littoral',
     Centre: 'centre',
-    FarNorth: 'farNorth',
+    FarNorth: 'farnorth',
     West: 'west',
     South: 'south',
     North: 'north',
     East: 'east',
     Adamawa: 'adamawa',
-    WestAfrica: 'westAfrica',
-    CentralAfrica: 'centralAfrica',
-    NorthAfrica: 'northAfrica',
+    WestAfrica: 'westafrican',
+    CentralAfrica: 'centralafrican',
+    NorthAfrica: 'northafrican',
     Vegetarian: 'vegetarian',
-    QuickEasy: 'quickEasy',
-    StreetFood: 'streetFood',
-    International: 'international Cuisine',
+    QuickEasy: 'quickeasy',
+    StreetFood: 'streetfood',
+    International: 'international',
     Snacks: 'snacks',
     Breakfasts: 'breakfasts',
     Desserts: 'desserts',
@@ -134,10 +136,6 @@ export default function Welcomepage() {
     return filtered;
   }, [visibleRecipes, debouncedSearchQuery, categoryParam]);
 
-  useEffect(() => {
-    dispatch(setRecommendedRecipes(userRegion));
-  }, [dispatch, userRegion]);
-
   const handleLike = useCallback((id: string) => {
     dispatch(toggleLike(id));
   }, [dispatch]);
@@ -156,7 +154,7 @@ export default function Welcomepage() {
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    setIsSearchMode(false); // Ensure search mode is disabled when cleared
+    setIsSearchMode(false);
   };
 
   const recipesPerPage = 4;
@@ -198,6 +196,12 @@ export default function Welcomepage() {
     latestRecipeIndex * recipesPerPage,
     (latestRecipeIndex + 1) * recipesPerPage
   );
+
+  // Debug logs
+  console.log('All Recipes:', recipes);
+  console.log('Visible Recipes:', visibleRecipes);
+  console.log('Recommended Recipes:', recommendedRecipes);
+  console.log('Latest Recipes:', latestRecipes);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -266,13 +270,16 @@ export default function Welcomepage() {
                 </div>
                 <div className="w-full md:w-1/2 order-2">
                   <div className="relative w-full max-w-xs sm:max-w-md md:max-w-2xl h-48 sm:h-64 md:h-[500px] rounded-xl sm:rounded-2xl md:rounded-3xl overflow-hidden shadow-lg transform hover:scale-[1.02] transition-transform duration-300">
-                    <Image
-                      src={images[index]}
-                      alt={t('welcome.featuredDishAlt')}
-                      fill
-                      style={{ objectFit: 'cover' }}
-                      className="rounded-xl sm:rounded-2xl md:rounded-3xl transition-opacity duration-1000 ease-in-out"
-                    />
+                    <picture>
+                      <source srcSet={images[index]} type="image/jpeg" />
+                      <source srcSet={images[index].replace('.jpg', '.webp').replace('.jpeg', '.webp').replace('.png', '.webp')} type="image/webp" />
+                      <img
+                        src={FALLBACK_IMAGE}
+                        alt={t('welcome.featuredDishAlt', 'Featured dish')}
+                        className="w-full h-full object-cover rounded-xl sm:rounded-2xl md:rounded-3xl transition-opacity duration-1000 ease-in-out"
+                        onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                      />
+                    </picture>
                     <div className="absolute inset-0 border-4 sm:border-6 md:border-8 border-orange-200 rounded-xl sm:rounded-2xl md:rounded-3xl pointer-events-none"></div>
                   </div>
                 </div>
@@ -285,16 +292,9 @@ export default function Welcomepage() {
                 {t('welcome.recommendedRecipes')}
               </h2>
               <div className="relative">
-                {status === 'loading' && (
-                  <p className="text-gray-500 italic text-sm sm:text-base px-2 sm:px-4">{t('welcome.loadingRecipes')}</p>
-                )}
-                {status === 'failed' && (
-                  <p className="text-red-500 italic text-sm sm:text-base px-2 sm:px-4">{t('welcome.errorFetchingRecipes', { error })}</p>
-                )}
-                {status === 'succeeded' && recommendedRecipes.length === 0 && (
+                {recommendedRecipes.length === 0 ? (
                   <p className="text-gray-500 italic text-sm sm:text-base px-2 sm:px-4">{t('welcome.noRecommendedRecipes')}</p>
-                )}
-                {status === 'succeeded' && recommendedRecipes.length > 0 && (
+                ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 px-2 sm:px-4">
                     {visibleRecommendedRecipes.map((recipe) => (
                       <RecipeCardHorizontal
@@ -335,10 +335,9 @@ export default function Welcomepage() {
                 {t('welcome.latestRecipes')}
               </h2>
               <div className="relative">
-                {latestRecipes.length === 0 && (
+                {latestRecipes.length === 0 ? (
                   <p className="text-gray-500 italic text-sm sm:text-base px-2 sm:px-4">{t('welcome.noResultsFound', 'No recipes found')}</p>
-                )}
-                {latestRecipes.length > 0 && (
+                ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 px-2 sm:px-4">
                     {visibleLatestRecipes.map((recipe) => (
                       <RecipeCard
@@ -353,6 +352,7 @@ export default function Welcomepage() {
                 <button
                   onClick={handlePrevLatestRecipes}
                   disabled={latestRecipeIndex === 0}
+                  aria-disabled={latestRecipeIndex === 0}
                   className="absolute top-1/2 -left-2 sm:-left-4 transform -translate-y-1/2 p-1 sm:p-2 rounded-full bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   title={t('welcome.previousRecipes')}
                   aria-label={t('welcome.previousRecipes')}
@@ -362,6 +362,7 @@ export default function Welcomepage() {
                 <button
                   onClick={handleNextLatestRecipes}
                   disabled={latestRecipeIndex === latestMaxIndex}
+                  aria-disabled={latestRecipeIndex === latestMaxIndex}
                   className="absolute top-1/2 -right-2 sm:-right-4 transform -translate-y-1/2 p-1 sm:p-2 rounded-full bg-orange-600 text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   title={t('welcome.nextRecipes')}
                   aria-label={t('welcome.nextRecipes')}
@@ -379,17 +380,25 @@ export default function Welcomepage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 px-2 sm:px-4">
                 {REGIONS.slice(0, 5).map(({ key, name, image }) => (
                   <div key={key} className="flex flex-col items-center">
-                    <div
-                      className="w-20 sm:w-28 md:w-40 h-20 sm:h-28 md:h-40 rounded-full bg-cover bg-center relative overflow-hidden"
-                      style={{ backgroundImage: `url(${image})` }}
-                    />
+                    <div className="w-20 sm:w-28 md:w-40 h-20 sm:h-28 md:h-40 rounded-full overflow-hidden relative">
+                      <picture>
+                        <source srcSet={image} type={image.endsWith('.png') ? 'image/png' : 'image/jpeg'} />
+                        <source srcSet={image.replace('.jpg', '.webp').replace('.jpeg', '.webp').replace('.png', '.webp').replace('.avif', '.webp')} type="image/webp" />
+                        <img
+                          src={FALLBACK_IMAGE}
+                          alt={t(`welcome.${key}`, name)}
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                        />
+                      </picture>
+                    </div>
                     <p
                       onClick={() => handleRegionClick(key)}
                       className="mt-1 sm:mt-2 text-center text-xs sm:text-sm md:text-base font-medium text-orange-700 cursor-pointer hover:text-orange-900"
-                      title={t(`welcome.${key}`, name)} // Use key for translation, fallback to name
+                      title={t(`welcome.${key}`, name)}
                       aria-label={t(`welcome.${key}`, name)}
                     >
-                      {t(`welcome.${key}`, name)} {/* Translated name or fallback */}
+                      {t(`welcome.${key}`, name)}
                     </p>
                   </div>
                 ))}
@@ -397,10 +406,18 @@ export default function Welcomepage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 md:gap-6 px-2 sm:px-4">
                 {REGIONS.slice(5, 10).map(({ key, name, image }) => (
                   <div key={key} className="flex flex-col items-center">
-                    <div
-                      className="w-20 sm:w-28 md:w-40 h-20 sm:h-28 md:h-40 rounded-full bg-cover bg-center relative overflow-hidden"
-                      style={{ backgroundImage: `url(${image})` }}
-                    />
+                    <div className="w-20 sm:w-28 md:w-40 h-20 sm:h-28 md:h-40 rounded-full overflow-hidden relative">
+                      <picture>
+                        <source srcSet={image} type={image.endsWith('.png') ? 'image/png' : 'image/jpeg'} />
+                        <source srcSet={image.replace('.jpg', '.webp').replace('.jpeg', '.webp').replace('.png', '.webp').replace('.avif', '.webp')} type="image/webp" />
+                        <img
+                          src={FALLBACK_IMAGE}
+                          alt={t(`welcome.${key}`, name)}
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
+                        />
+                      </picture>
+                    </div>
                     <p
                       onClick={() => handleRegionClick(key)}
                       className="mt-1 sm:mt-2 text-center text-xs sm:text-sm md:text-base font-medium text-orange-700 cursor-pointer hover:text-orange-900"

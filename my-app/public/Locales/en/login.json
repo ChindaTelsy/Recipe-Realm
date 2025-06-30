@@ -1,13 +1,15 @@
 {
   "login": {
     "title": "Log In to Your Account",
-    "username": "Username",
+    "email": "Email",
     "password": "Password",
-    "placeholderUsername": "Enter your username",
+    "placeholderEmail": "Enter your email",
     "placeholderPassword": "Enter your password",
     "rememberMe": "Remember me",
     "forgotPassword": "Forgot password?",
     "submit": "Log In",
+    "loading": "Logging in...",
+    "alertInvalidCredentials": "Invalid email or password. Please try again.",
     "noAccount": "Don't have an account?",
     "signUp": "Sign Up"
   }

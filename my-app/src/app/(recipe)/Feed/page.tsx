@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useMemo, useState, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -17,23 +17,28 @@ const ALL_CATEGORIES_KEYS = [
 ];
 
 export default function CategoriesPage() {
-  const { t } = useTranslation("feed");
+  const { t } = useTranslation('feed');
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
 
   const recipes = useSelector((state: RootState) => state.recipes.recipes);
+  const token = useSelector((state: RootState) => state.user.token);
   const categoryParam = searchParams.get('category') || 'all';
+  const fromParam = searchParams.get('from') || 'welcome'; // Default to welcome if no from param
 
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
   const [currentPage, setCurrentPage] = useState(1);
   const recipesPerPage = 20;
 
   const visibleRecipes = useMemo(() => {
+    const isFromHome = fromParam === 'home' && token;
     return recipes.filter(recipe =>
-      recipe.visibleOn === 'home' || recipe.visibleOn === 'both' || recipe.visibleOn === 'welcome'
+      isFromHome
+        ? recipe.visibleOn === 'home' || recipe.visibleOn === 'both'
+        : recipe.visibleOn === 'welcome' || recipe.visibleOn === 'both'
     );
-  }, [recipes]);
+  }, [recipes, fromParam, token]);
 
   const categoryMapping: { [key: string]: string } = {
     NorthWest: 'northwest',
@@ -82,17 +87,25 @@ export default function CategoriesPage() {
   );
 
   const handleLike = useCallback((id: string) => {
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     dispatch(toggleLike(id));
-  }, [dispatch]);
+  }, [dispatch, token, router]);
 
   const handleRate = useCallback((id: string, rating: number) => {
+    if (!token) {
+      router.push('/login');
+      return;
+    }
     dispatch(setRating({ id, rating }));
-  }, [dispatch]);
+  }, [dispatch, token, router]);
 
   const handleCategoryClick = (category: string) => {
     setSelectedCategory(category);
-    setCurrentPage(1); // Reset to first page when category changes
-    router.push(`?category=${category.toLowerCase()}`, { scroll: false });
+    setCurrentPage(1);
+    router.push(`?category=${category.toLowerCase()}&from=${fromParam}`, { scroll: false });
   };
 
   const handlePageChange = (page: number) => {
@@ -161,36 +174,34 @@ export default function CategoriesPage() {
     );
   };
 
-  // Calculate sidebar height based on number of recipes
   const recipeCount = filteredRecipes.length;
   let sidebarHeight;
   if (recipeCount <= 8) {
-    sidebarHeight = 'h-screen'; // Default height for 8 or fewer recipes
+    sidebarHeight = 'h-screen';
   } else if (recipeCount < 20) {
-    // Scale height linearly between 8 and 20 recipes
-    const minHeight = 100; // Approximate vh for h-screen (100vh)
-    const maxHeight = 200; // Target height for 20 recipes (in vh)
-    const heightFactor = (recipeCount - 8) / (20 - 8); // Proportion between 8 and 20
+    const minHeight = 100;
+    const maxHeight = 200;
+    const heightFactor = (recipeCount - 8) / (20 - 8);
     sidebarHeight = `h-[${minHeight + (maxHeight - minHeight) * heightFactor}vh]`;
   } else {
-    sidebarHeight = 'h-[200vh]'; // Maximum height for 20 or more recipes
+    sidebarHeight = 'h-[200vh]';
   }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       <main className="flex-grow flex">
-        {/* Left Sidebar for Categories */}
-        <aside className={`w-full md:w-64 bg-white  p-6 overflow-y-auto fixed md:static ${sidebarHeight}`}>
+        <aside className={`w-full md:w-64 bg-white p-6 overflow-y-auto fixed md:static ${sidebarHeight}`}>
           <h2 className="font-playfair text-2xl font-semibold mb-4">{t('categories.title')}</h2>
           <div className="space-y-2">
             {ALL_CATEGORIES_KEYS.map((key) => (
               <button
                 key={key}
                 onClick={() => handleCategoryClick(key)}
-                className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedCategory === key
+                className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === key
                     ? 'bg-orange-600 text-white'
                     : 'bg-white text-orange-700 hover:bg-orange-100'
-                  }`}
+                }`}
                 title={t('categories.filterByCategory', { category: t(`categories.${key}`) })}
               >
                 {t(`categories.${key}`)}
@@ -199,7 +210,6 @@ export default function CategoriesPage() {
           </div>
         </aside>
 
-        {/* Right Section for Recipes */}
         <div className="flex-grow p-6 ml-0 md:ml-20">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {paginatedRecipes.length > 0 ? (

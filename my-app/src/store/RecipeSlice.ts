@@ -1,32 +1,55 @@
+
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Recipe, VisibleOn } from '@/model/Recipe';
+import { createAsyncThunk } from '@reduxjs/toolkit';
+import axios from '../lib/axios';
+import { log } from 'console';
 
 interface RecipesState {
   recipes: Recipe[];
   recommendedRecipes: Recipe[];
+  userRecipes: Recipe[];
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
 // Payload for addRecipe: excludes id and createdAt, includes optional fields
-type AddRecipePayload = Omit<Partial<Recipe>, 'id' | 'createdAt'> & {
-  title: string;
-  description: string;
-  image: string;
-};
+// type AddRecipePayload = Omit<Partial<Recipe>, 'id' | 'createdAt'> & {
+//   id: string;
+//   title: string;
+//   description: string;
+//   image: string;
+//   ingredients: string[];
+//   steps: string[];
+//   category: string;
+//   createdAt: string;
+//   minPrice: string;
+//   cookTime: string;
+//   prepTime: string;
+//   visibleOn: VisibleOn;
+//   userId?: string;
+//   region: string;
+// };
 
 const initialRecipes: Recipe[] = [
   {
     id: '1',
     title: 'Ndole',
     description: 'A bitterleaf stew with peanuts and meat.',
-    image: '/images/ndole-1.webp',
+    image: '/images/Ndole-1.webp',
     rating: 5,
     liked: false,
     category: 'west',
     createdAt: '2024-05-01T12:00:00Z',
     visibleOn: 'both',
     region: 'centre',
+    ingredients: ['bitterleaf', 'peanuts', 'beef', 'onions', 'palm oil'],
+    steps: ['Wash bitterleaf thoroughly.', 'Boil beef with onions.', 'Grind peanuts and add to stew.', 'Simmer with palm oil.'],
+    minPrice: '1000',
+    cookTime: '60 min',
+    prepTime: '30 min',
+    userId: '1',
   },
   {
     id: '2',
@@ -39,30 +62,48 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-03T08:00:00Z',
     visibleOn: 'welcome',
     region: 'southwest',
+    ingredients: ['eru leaves', 'waterleaf', 'palm oil', 'crayfish', 'cow skin'],
+    steps: ['Boil eru and waterleaf.', 'Add palm oil and crayfish.', 'Simmer with cow skin.', 'Serve with water fufu.'],
+    minPrice: '800',
+    cookTime: '45 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '3',
     title: 'Jollof Rice',
     description: 'Classic West African rice cooked in spicy tomato sauce.',
-    image: '/images/jolof rice.jpeg',
+    image: '/images/jolof-rice.jpeg',
     rating: 4,
     liked: false,
-    category: 'westAfrica',
+    category: 'westAfrican',
     createdAt: '2024-05-28T09:30:00Z',
     visibleOn: 'both',
-    region: 'westAfrica',
+    region: 'westAfrican',
+    ingredients: ['rice', 'tomatoes', 'peppers', 'onions', 'chicken'],
+    steps: ['Blend tomatoes and peppers.', 'Fry onions and paste.', 'Add rice and stock.', 'Cook until tender.'],
+    minPrice: '700',
+    cookTime: '40 min',
+    prepTime: '15 min',
+    userId: '2',
   },
   {
     id: '4',
     title: 'Fufu & Light Soup',
     description: 'Ghanaian fufu served with spicy light soup.',
-    image: '/images/Fufu and light soup.jpeg',
+    image: '/images/Fufu-and-light-soup.jpeg',
     rating: 3,
     liked: false,
-    category: 'westAfrica',
+    category: 'westAfrican',
     createdAt: '2024-05-10T14:00:00Z',
     visibleOn: 'both',
-    region: 'westAfrica',
+    region: 'westAfrican',
+    ingredients: ['cassava', 'plantain', 'tomatoes', 'goat meat', 'ginger'],
+    steps: ['Boil cassava and plantain.', 'Pound into fufu.', 'Cook tomatoes and goat meat.', 'Add spices and simmer.'],
+    minPrice: '900',
+    cookTime: '50 min',
+    prepTime: '25 min',
+    userId: '1',
   },
   {
     id: '5',
@@ -71,34 +112,52 @@ const initialRecipes: Recipe[] = [
     image: '/images/spaghetti-bolognese.jpeg',
     rating: 5,
     liked: false,
-    category: 'international Cuisine',
+    category: 'international',
     createdAt: '2024-05-11T15:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['spaghetti', 'ground beef', 'tomatoes', 'onions', 'parmesan'],
+    steps: ['Boil spaghetti.', 'Cook beef with onions.', 'Add tomato sauce.', 'Serve with parmesan.'],
+    minPrice: '1200',
+    cookTime: '30 min',
+    prepTime: '15 min',
+    userId: '2',
   },
   {
     id: '6',
     title: 'Chicken Curry',
     description: 'Aromatic curry with tender chicken pieces.',
-    image: '/images/chicken curry.jpeg',
+    image: '/images/chickencurry.jpeg',
     rating: 4,
     liked: false,
-    category: 'international Cuisine',
+    category: 'international',
     createdAt: '2024-05-12T10:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['chicken', 'curry powder', 'coconut milk', 'onions', 'garlic'],
+    steps: ['Marinate chicken with spices.', 'Fry onions and garlic.', 'Add coconut milk.', 'Simmer until cooked.'],
+    minPrice: '1100',
+    cookTime: '35 min',
+    prepTime: '20 min',
+    userId: '1',
   },
   {
     id: '7',
     title: 'Puff Puff',
     description: 'A local breakfast with a beautiful texture.',
-    image: '/images/puff puff.jpeg',
+    image: '/images/puff-puff.jpeg',
     rating: 4,
     liked: false,
     category: 'snacks',
     createdAt: '2024-05-13T11:00:00Z',
     visibleOn: 'both',
     region: 'centre',
+    ingredients: ['flour', 'sugar', 'yeast', 'water', 'oil'],
+    steps: ['Mix flour, sugar, and yeast.', 'Add water to form dough.', 'Fry in hot oil.', 'Drain and serve.'],
+    minPrice: '200',
+    cookTime: '20 min',
+    prepTime: '10 min',
+    userId: '2',
   },
   {
     id: '8',
@@ -111,6 +170,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-14T16:00:00Z',
     visibleOn: 'both',
     region: 'centre',
+    ingredients: ['hibiscus flowers', 'sugar', 'water', 'ginger', 'pineapple'],
+    steps: ['Boil hibiscus flowers.', 'Add sugar and ginger.', 'Strain and cool.', 'Serve chilled.'],
+    minPrice: '300',
+    cookTime: '15 min',
+    prepTime: '10 min',
+    userId: '2',
   },
   {
     id: '9',
@@ -123,6 +188,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-15T13:00:00Z',
     visibleOn: 'both',
     region: 'northwest',
+    ingredients: ['cocoyam', 'palm oil', 'limestone', 'beef', 'spices'],
+    steps: ['Pound cocoyam.', 'Boil beef with spices.', 'Mix limestone and palm oil.', 'Combine and serve.'],
+    minPrice: '1000',
+    cookTime: '60 min',
+    prepTime: '30 min',
+    userId: '1',
   },
   {
     id: '10',
@@ -135,6 +206,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-16T10:30:00Z',
     visibleOn: 'both',
     region: 'littoral',
+    ingredients: ['fish', 'mbongo spice', 'tomatoes', 'onions', 'palm oil'],
+    steps: ['Burn mbongo spice.', 'Fry onions and tomatoes.', 'Add fish and palm oil.', 'Simmer and serve.'],
+    minPrice: '900',
+    cookTime: '40 min',
+    prepTime: '20 min',
+    userId: '1',
   },
   {
     id: '11',
@@ -147,6 +224,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-17T09:00:00Z',
     visibleOn: 'both',
     region: 'north',
+    ingredients: ['beef', 'peanuts', 'spices', 'salt', 'ginger'],
+    steps: ['Slice beef thinly.', 'Marinate with spices.', 'Dry in sun or oven.', 'Grind peanuts and coat.'],
+    minPrice: '500',
+    cookTime: '120 min',
+    prepTime: '30 min',
+    userId: '2',
   },
   {
     id: '12',
@@ -159,6 +242,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-18T17:00:00Z',
     visibleOn: 'both',
     region: 'northwest',
+    ingredients: ['chicken', 'huckleberry', 'palm oil', 'onions', 'spices'],
+    steps: ['Marinate chicken.', 'Grill until cooked.', 'Cook huckleberry with palm oil.', 'Serve together.'],
+    minPrice: '1000',
+    cookTime: '45 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '13',
@@ -167,10 +256,16 @@ const initialRecipes: Recipe[] = [
     image: '/images/makayabu.jpg',
     rating: 4,
     liked: false,
-    category: 'centralAfrica',
+    category: 'centralAfrican',
     createdAt: '2024-05-19T14:00:00Z',
     visibleOn: 'both',
-    region: 'centralAfrica',
+    region: 'centralAfrican',
+    ingredients: ['salted fish', 'onions', 'tomatoes', 'peppers', 'oil'],
+    steps: ['Soak fish to reduce salt.', 'Fry onions and peppers.', 'Add tomatoes and fish.', 'Simmer and serve.'],
+    minPrice: '800',
+    cookTime: '30 min',
+    prepTime: '15 min',
+    userId: '1',
   },
   {
     id: '14',
@@ -182,7 +277,13 @@ const initialRecipes: Recipe[] = [
     category: 'snacks',
     createdAt: '2024-05-20T08:30:00Z',
     visibleOn: 'both',
-    region: 'eastAfrica',
+    region: 'eastAfrican',
+    ingredients: ['flour', 'sugar', 'coconut milk', 'yeast', 'oil'],
+    steps: ['Mix flour, sugar, and yeast.', 'Add coconut milk.', 'Knead and fry.', 'Drain and serve.'],
+    minPrice: '200',
+    cookTime: '20 min',
+    prepTime: '15 min',
+    userId: '1',
   },
   {
     id: '15',
@@ -191,34 +292,52 @@ const initialRecipes: Recipe[] = [
     image: '/images/chakalaka.jpeg',
     rating: 4,
     liked: false,
-    category: 'southAfrica',
+    category: 'southAfrican',
     createdAt: '2024-05-21T11:00:00Z',
     visibleOn: 'both',
-    region: 'southAfrica',
+    region: 'southAfrican',
+    ingredients: ['beans', 'peppers', 'carrots', 'tomatoes', 'spices'],
+    steps: ['Chop vegetables.', 'Fry peppers and carrots.', 'Add beans and spices.', 'Simmer and serve.'],
+    minPrice: '400',
+    cookTime: '25 min',
+    prepTime: '15 min',
+    userId: '2',
   },
   {
     id: '16',
     title: 'Chocolate Cake',
     description: 'Decadent dessert with a gooey chocolate center.',
-    image: '/images/choco cake.jpeg',
+    image: '/images/chococake.jpeg',
     rating: 5,
     liked: false,
     category: 'desserts',
     createdAt: '2024-05-22T19:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['flour', 'cocoa', 'sugar', 'eggs', 'butter'],
+    steps: ['Mix dry ingredients.', 'Add eggs and butter.', 'Bake at 180°C.', 'Cool and serve.'],
+    minPrice: '1500',
+    cookTime: '40 min',
+    prepTime: '20 min',
+    userId: '1',
   },
   {
     id: '17',
-    title: 'Fruit Salad ',
+    title: 'Fruit Salad',
     description: 'Fresh fruits served with chilled yogurt.',
-    image: '/images/fruit salad.jpg',
+    image: '/images/fruitsalad.jpg',
     rating: 4,
     liked: false,
     category: 'desserts',
     createdAt: '2024-05-23T07:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['mango', 'banana', 'pineapple', 'yogurt', 'honey'],
+    steps: ['Chop fruits.', 'Mix with yogurt.', 'Drizzle honey.', 'Chill and serve.'],
+    minPrice: '600',
+    cookTime: '0 min',
+    prepTime: '10 min',
+    userId: '2',
   },
   {
     id: '18',
@@ -227,10 +346,16 @@ const initialRecipes: Recipe[] = [
     image: '/images/yassa.jpeg',
     rating: 4,
     liked: false,
-    category: 'westAfrica',
+    category: 'westAfrican',
     createdAt: '2024-05-24T10:00:00Z',
     visibleOn: 'both',
-    region: 'Senegal',
+    region: 'senegal',
+    ingredients: ['chicken', 'onions', 'mustard', 'lemon', 'rice'],
+    steps: ['Marinate chicken with mustard.', 'Fry onions.', 'Add chicken and lemon.', 'Serve with rice.'],
+    minPrice: '1000',
+    cookTime: '45 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '19',
@@ -239,10 +364,16 @@ const initialRecipes: Recipe[] = [
     image: '/images/egusi.jpeg',
     rating: 5,
     liked: false,
-    category: 'westAfrica',
+    category: 'westAfrican',
     createdAt: '2024-05-25T12:00:00Z',
     visibleOn: 'both',
     region: 'nigeria',
+    ingredients: ['egusi seeds', 'spinach', 'beef', 'palm oil', 'crayfish'],
+    steps: ['Grind egusi seeds.', 'Boil beef.', 'Fry palm oil with egusi.', 'Add spinach and serve.'],
+    minPrice: '900',
+    cookTime: '50 min',
+    prepTime: '25 min',
+    userId: '2',
   },
   {
     id: '20',
@@ -251,12 +382,18 @@ const initialRecipes: Recipe[] = [
     image: '/images/shawarma.png',
     rating: 4,
     liked: false,
-    category: 'international Cuisine',
+    category: 'international',
     createdAt: '2024-05-26T18:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['chicken', 'pita bread', 'garlic sauce', 'lettuce', 'tomatoes'],
+    steps: ['Marinate chicken.', 'Grill meat.', 'Assemble in pita.', 'Add sauce and serve.'],
+    minPrice: '700',
+    cookTime: '20 min',
+    prepTime: '15 min',
+    userId: '2',
   },
-    {
+  {
     id: '21',
     title: 'Okok',
     description: 'Cassava leaves cooked with peanuts and palm oil.',
@@ -267,6 +404,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-27T10:00:00Z',
     visibleOn: 'both',
     region: 'east',
+    ingredients: ['cassava leaves', 'peanuts', 'palm oil', 'fish', 'spices'],
+    steps: ['Boil cassava leaves.', 'Grind peanuts.', 'Add palm oil and fish.', 'Simmer and serve.'],
+    minPrice: '800',
+    cookTime: '50 min',
+    prepTime: '25 min',
+    userId: '2',
   },
   {
     id: '22',
@@ -279,6 +422,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-27T11:00:00Z',
     visibleOn: 'both',
     region: 'centre',
+    ingredients: ['corn', 'cassava leaves', 'palm oil', 'onions', 'spices'],
+    steps: ['Grind corn.', 'Boil cassava leaves.', 'Mix with palm oil.', 'Cook and serve.'],
+    minPrice: '600',
+    cookTime: '40 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '23',
@@ -291,6 +440,12 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-27T12:00:00Z',
     visibleOn: 'both',
     region: 'adamawa',
+    ingredients: ['milk', 'starter culture', 'sugar'],
+    steps: ['Heat milk.', 'Add starter culture.', 'Ferment overnight.', 'Sweeten and serve.'],
+    minPrice: '300',
+    cookTime: '0 min',
+    prepTime: '15 min',
+    userId: '2',
   },
   {
     id: '24',
@@ -299,10 +454,16 @@ const initialRecipes: Recipe[] = [
     image: '/images/lahoh.jpeg',
     rating: 4,
     liked: false,
-    category: 'eastAfrica',
+    category: 'eastAfrican',
     createdAt: '2024-05-27T13:00:00Z',
     visibleOn: 'both',
     region: 'somalia',
+    ingredients: ['flour', 'water', 'beef', 'spices', 'onions'],
+    steps: ['Mix flour and water.', 'Cook lahoh on griddle.', 'Stir-fry beef with spices.', 'Serve together.'],
+    minPrice: '900',
+    cookTime: '30 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '25',
@@ -311,22 +472,34 @@ const initialRecipes: Recipe[] = [
     image: '/images/Nyama-Choma.jpg',
     rating: 5,
     liked: false,
-    category: 'eastAfrica',
+    category: 'eastAfrican',
     createdAt: '2024-05-27T14:00:00Z',
     visibleOn: 'both',
     region: 'kenya',
+    ingredients: ['goat meat', 'salt', 'tomatoes', 'onions', 'chili'],
+    steps: ['Marinate meat with salt.', 'Grill over charcoal.', 'Chop tomatoes and onions.', 'Serve with kachumbari.'],
+    minPrice: '1200',
+    cookTime: '60 min',
+    prepTime: '15 min',
+    userId: '1',
   },
   {
     id: '26',
     title: 'Matapa',
-    description: 'Mozambican stew made with cassava leaves, garlic and coconut milk.',
+    description: 'Mozambican stew made with cassava leaves, garlic, and coconut milk.',
     image: '/images/Matapa.webp',
     rating: 4,
     liked: false,
-    category: 'southAfrica',
+    category: 'southAfrican',
     createdAt: '2024-05-27T15:00:00Z',
     visibleOn: 'both',
     region: 'mozambique',
+    ingredients: ['cassava leaves', 'coconut milk', 'garlic', 'peanuts', 'shrimp'],
+    steps: ['Boil cassava leaves.', 'Add coconut milk and garlic.', 'Mix in peanuts.', 'Cook shrimp and serve.'],
+    minPrice: '800',
+    cookTime: '40 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '27',
@@ -335,10 +508,16 @@ const initialRecipes: Recipe[] = [
     image: '/images/tagine.jpeg',
     rating: 5,
     liked: false,
-    category: 'northAfrica',
+    category: 'northAfrican',
     createdAt: '2024-05-27T16:00:00Z',
     visibleOn: 'both',
     region: 'morocco',
+    ingredients: ['lamb', 'apricots', 'onions', 'spices', 'almonds'],
+    steps: ['Marinate lamb with spices.', 'Fry onions.', 'Add apricots and simmer.', 'Garnish with almonds.'],
+    minPrice: '1300',
+    cookTime: '90 min',
+    prepTime: '30 min',
+    userId: '2',
   },
   {
     id: '28',
@@ -351,18 +530,30 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-27T17:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['strawberries', 'milk', 'ice cream', 'sugar'],
+    steps: ['Blend strawberries with milk.', 'Add ice cream.', 'Sweeten to taste.', 'Serve chilled.'],
+    minPrice: '500',
+    cookTime: '0 min',
+    prepTime: '5 min',
+    userId: '2',
   },
   {
     id: '29',
     title: 'Beignets Manioc',
     description: 'Cassava fritters common in Central Africa.',
-    image: '/images/accra casava.jpg',
+    image: '/images/accracasava.jpg',
     rating: 3,
     liked: false,
     category: 'snacks',
     createdAt: '2024-05-27T18:00:00Z',
     visibleOn: 'both',
-    region: 'centralAfrica',
+    region: 'centralAfrican',
+    ingredients: ['cassava', 'flour', 'sugar', 'oil', 'water'],
+    steps: ['Grate cassava.', 'Mix with flour and sugar.', 'Fry in hot oil.', 'Drain and serve.'],
+    minPrice: '200',
+    cookTime: '20 min',
+    prepTime: '15 min',
+    userId: '2',
   },
   {
     id: '30',
@@ -374,7 +565,13 @@ const initialRecipes: Recipe[] = [
     category: 'snacks',
     createdAt: '2024-05-27T19:00:00Z',
     visibleOn: 'both',
-    region: 'Ghana',
+    region: 'ghana',
+    ingredients: ['plantains', 'ginger', 'chili', 'oil', 'salt'],
+    steps: ['Slice plantains.', 'Marinate with spices.', 'Fry in hot oil.', 'Drain and serve.'],
+    minPrice: '300',
+    cookTime: '15 min',
+    prepTime: '10 min',
+    userId: '1',
   },
   {
     id: '31',
@@ -387,42 +584,66 @@ const initialRecipes: Recipe[] = [
     createdAt: '2024-05-27T20:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['mascarpone', 'coffee', 'ladyfingers', 'cocoa', 'sugar'],
+    steps: ['Dip ladyfingers in coffee.', 'Layer with mascarpone.', 'Chill overnight.', 'Dust with cocoa.'],
+    minPrice: '1500',
+    cookTime: '0 min',
+    prepTime: '30 min',
+    userId: '2',
   },
   {
     id: '32',
     title: 'Crepes Suzette',
     description: 'French crepes flambéed in orange liqueur.',
-    image: '/images/Crepes Suzette.jpeg',
+    image: '/images/CrepesSuzette.jpeg',
     rating: 4,
     liked: false,
     category: 'desserts',
     createdAt: '2024-05-27T21:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['flour', 'eggs', 'orange juice', 'butter', 'liqueur'],
+    steps: ['Make crepe batter.', 'Cook crepes.', 'Prepare orange sauce.', 'Flambé and serve.'],
+    minPrice: '1200',
+    cookTime: '20 min',
+    prepTime: '15 min',
+    userId: '2',
   },
   {
     id: '33',
     title: 'Tapioca Pudding',
     description: 'Chilled dessert with tapioca pearls and coconut milk.',
-    image: '/images/tapioca Pudding.jpeg',
+    image: '/images/tapioca-Pudding.jpeg',
     rating: 3,
     liked: false,
     category: 'desserts',
     createdAt: '2024-05-27T22:00:00Z',
     visibleOn: 'both',
     region: 'international',
+    ingredients: ['tapioca pearls', 'coconut milk', 'sugar', 'vanilla'],
+    steps: ['Soak tapioca pearls.', 'Boil with coconut milk.', 'Sweeten and cool.', 'Serve chilled.'],
+    minPrice: '600',
+    cookTime: '20 min',
+    prepTime: '10 min',
+    userId: '2',
   },
   {
     id: '34',
     title: 'Naan & Butter Chicken',
     description: 'Indian bread served with creamy spiced chicken.',
-    image: '/images/Naan & Butter Chicken.jpeg',
+    image: '/images/naan-butter-chicken.jpeg',
     rating: 5,
     liked: false,
-    category: 'international Cuisine',
+    category: 'international',
     createdAt: '2024-05-27T23:00:00Z',
     visibleOn: 'both',
     region: 'india',
+    ingredients: ['chicken', 'naan', 'tomatoes', 'cream', 'spices'],
+    steps: ['Cook chicken with spices.', 'Make tomato sauce.', 'Add cream.', 'Serve with naan.'],
+    minPrice: '1300',
+    cookTime: '40 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '35',
@@ -431,89 +652,316 @@ const initialRecipes: Recipe[] = [
     image: '/images/pho.jpeg',
     rating: 5,
     liked: false,
-    category: 'international Cuisine',
+    category: 'international',
     createdAt: '2024-05-28T08:00:00Z',
     visibleOn: 'both',
     region: 'vietnam',
+    ingredients: ['rice noodles', 'beef', 'broth', 'herbs', 'lime'],
+    steps: ['Cook noodles.', 'Prepare broth.', 'Slice beef thinly.', 'Assemble and serve.'],
+    minPrice: '1000',
+    cookTime: '60 min',
+    prepTime: '30 min',
+    userId: '1',
   },
   {
     id: '36',
     title: 'Bun Kabab',
-    description: 'Pakistani street food burger with spicy patty.',
+    description: 'Spiced meat patties served in a bun.',
     image: '/images/Bun-Kabab.jpg',
-    rating: 4,
+    rating: 5,
     liked: false,
-    category: 'international Cuisine',
+    category: 'international',
     createdAt: '2024-05-28T09:00:00Z',
     visibleOn: 'both',
     region: 'pakistan',
+    ingredients: ['beef patty', 'bun', 'onions', 'coriander', 'spices'],
+    steps: ['Shape beef into patties.', 'Fry until cooked.', 'Serve in buns with toppings.'],
+    minPrice: '1500',
+    cookTime: '25 min',
+    prepTime: '20 min',
+    userId: '2',
   },
   {
     id: '37',
-    title: 'Couscous Royal',
-    description: 'North African semolina served with meat and vegetables.',
-    image: '/images/Couscous Royal.jpeg',
-    rating: 5,
-    liked: false,
-    category: 'northAfrica',
-    createdAt: '2024-05-28T10:00:00Z',
-    visibleOn: 'both',
-    region: 'algeria',
-  },
-  {
-    id: '38',
     title: 'Pancakes',
-    description: 'Sweet and crispy pancakes, a popular side dish.',
+    description: 'Fluffy pancakes served with syrup.',
     image: '/images/pancakes.jpeg',
     rating: 4,
     liked: false,
     category: 'breakfasts',
-    createdAt: '2024-05-28T11:00:00Z',
+    createdAt: '2024-05-28T10:00:00Z',
     visibleOn: 'both',
-    region: 'westAfrica',
+    region: 'international',
+    ingredients: ['flour', 'milk', 'eggs', 'sugar', 'butter'],
+    steps: ['Mix ingredients.', 'Cook on griddle.', 'Serve with syrup.'],
+    minPrice: '1000',
+    cookTime: '25 min',
+    prepTime: '15 min',
+    userId: '1',
   },
-  {
-    id: '39',
-    title: 'Ndomba',
-    description: 'Steamed fish with local spices wrapped in banana leaves.',
-    image: '/images/ndomba.webp',
-    rating: 4,
-    liked: false,
-    category: 'littoral',
-    createdAt: '2024-05-28T12:00:00Z',
-    visibleOn: 'both',
-    region: 'littoral',
-  },
-  {
-    id: '40',
-    title: 'Kondre',
-    description: 'Hearty spiced plantain and meat stew from the West. ',
-    image: '/images/kondre.webp',
-    rating: 5,
-    liked: false,
-    category: 'west',
-    createdAt: '2024-05-28T13:00:00Z',
-    visibleOn: 'both',
-    region: 'west',
-  },
+
+
+
 ];
 
 const initialState: RecipesState = {
   recipes: initialRecipes,
   recommendedRecipes: [],
+  userRecipes: [],
   status: 'idle',
   error: null,
 };
+
+
+export const addRecipeThunk = createAsyncThunk(
+  'recipes/addRecipe',
+  async (
+    { recipeData, token }: { recipeData: FormData; token: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await axios.post('/recipes', recipeData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const recipe = response.data.recipe;
+      if (!recipe || !recipe.id) {
+        throw new Error('Recipe ID is missing in response');
+      }
+
+      const normalizedRecipe: Recipe = {
+        id: String(recipe.id),
+        title: recipe.title || '',
+        description: recipe.description || '',
+        image: recipe.image_path
+          ? recipe.image_path.startsWith('http') || recipe.image_path.startsWith('/')
+            ? recipe.image_path
+            : `/storage/${recipe.image_path}`
+          : null,
+
+        ingredients: Array.isArray(recipe.ingredients)
+          ? recipe.ingredients
+          : JSON.parse(recipe.ingredients || '[]'),
+        steps: Array.isArray(recipe.steps)
+          ? recipe.steps
+          : JSON.parse(recipe.steps || '[]'),
+        category: recipe.category_id?.toString() || '',
+        region: recipe.region_id?.toString() || 'unknown',
+        minPrice: recipe.min_price?.toString() || '0',
+        cookTime: recipe.cook_time || '',
+        prepTime: recipe.prep_time || '',
+        createdAt: recipe.created_at || new Date().toISOString(),
+        rating: recipe.rating || 0,
+        liked: false,
+        userId: String(recipe.user_id),
+        visibleOn: recipe.visible_on || 'both',
+      };
+
+      return normalizedRecipe;
+    } catch (error: any) {
+      console.error('Error adding recipe:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        headers: error.response?.headers,
+      });
+      const errorMessage =
+        error.response?.status === 401
+          ? 'Unauthenticated: Invalid or expired token'
+          : error.response?.status === 422
+            ? `Validation error: ${error.response?.data?.errors
+              ? Object.values(error.response.data.errors).flat().join(', ')
+              : error.response?.data?.message || 'Invalid input data'}`
+            : error.response?.status === 500
+              ? `Server error: ${error.response?.data?.message || 'Internal server error'}`
+              : error.message || 'Failed to add recipe';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const toggleLike = createAsyncThunk(
+  'recipes/toggleLike',
+  async (id: string, { getState, rejectWithValue }) => {
+    const state = getState() as { user: { token: string | null } };
+    const token = state.user.token;
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+    try {
+      const response = await axios.post(
+        `/recipes/${id}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to toggle like');
+    }
+  }
+);
+
+export const setRating = createAsyncThunk(
+  'recipes/setRating',
+  async (
+    { id, rating }: { id: string; rating: number },
+    { getState, rejectWithValue }
+  ) => {
+    const state = getState() as { user: { token: string | null } };
+    const token = state.user.token;
+    if (!token) {
+      return rejectWithValue('No token found');
+    }
+    try {
+      const response = await axios.post(
+        `/recipes/${id}/rate`,
+        { rating },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to set rating');
+    }
+  }
+);
+
+export const deleteRecipeThunk = createAsyncThunk(
+  'recipes/deleteRecipe',
+  async ({ recipeId, token }: { recipeId: string; token: string }, { rejectWithValue }) => {
+    try {
+      await axios.delete(`/recipes/${recipeId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return recipeId;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete recipe');
+    }
+  }
+);
+
+export const fetchRecipesThunk = createAsyncThunk(
+  'recipes/fetchRecipes',
+  async ({ isAuthenticated }: { isAuthenticated: boolean }, { rejectWithValue }) => {
+    try {
+      const headers: { Authorization?: string } = {};
+      console.log('Fetching recipes with isAuthenticated:', isAuthenticated);
+      if (isAuthenticated) {
+        const token = localStorage.getItem('token');
+        console.log('Fetching recipes with token 111111111111111111111111:', token);
+        
+        if (!token) {
+          console.log("no token 133333333333999000")
+          return rejectWithValue('No authentication token found. Please log in.');
+        }
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const payload = isAuthenticated ? {} : { public: true };
+      const response = await axios.post('/recipes', payload, { headers });
+      if (!Array.isArray(response.data)) {
+        console.log("333333333333333333333333333 33333333333333333333333333333");
+        
+        return rejectWithValue('Invalid response format: Expected an array of recipes');
+      }
+      console.log('Fetched recipes#################################################:', response.data);
+      return response.data.map((recipe: any) => ({
+        id: String(recipe.id),
+        title: recipe.title || '',
+        description: recipe.description || '',
+        image: recipe.image_path
+          ? recipe.image_path.startsWith('/')
+            ? recipe.image_path
+            : `/images/${recipe.image_path}`
+          : null,
+        ingredients: Array.isArray(recipe.ingredients)
+          ? recipe.ingredients
+          : JSON.parse(recipe.ingredients || '[]'),
+        steps: Array.isArray(recipe.steps)
+          ? recipe.steps
+          : JSON.parse(recipe.steps || '[]'),
+        category: recipe.category?.name || recipe.category_id?.toString() || '',
+        region: recipe.region?.name || recipe.region_id?.toString() || 'unknown',
+        minPrice: recipe.min_price?.toString() || '0',
+        cookTime: recipe.cook_time || '',
+        prepTime: recipe.prep_time || '',
+        createdAt: recipe.created_at || new Date().toISOString(),
+        rating: recipe.ratings?.length
+          ? recipe.ratings.reduce((acc: number, r: any) => acc + r.rating, 0) / recipe.ratings.length
+          : 0,
+        liked: recipe.favoritedBy?.some((f: any) => f.user_id === recipe.user_id) || false,
+        userId: String(recipe.user_id),
+        visibleOn: recipe.visible_on || 'both',
+      }));
+    } catch (error: any) {
+      const statusCode = error.response?.status || 'Unknown';
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.errors ||
+        error.message ||
+        'Unable to fetch recipes';
+      console.error('Error fetching recipes:', {
+        message: errorMessage,
+        statusCode,
+        responseData: error.response?.data || null,
+      });
+      return rejectWithValue(`${errorMessage} (Status: ${statusCode})`);
+    }
+  }
+);
+
+export const fetchUserRecipesThunk = createAsyncThunk(
+  'recipes/fetchUserRecipes',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/users/${userId}/recipes`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      return response.data.map((recipe: any) => ({
+        id: String(recipe.id),
+        title: recipe.title || '',
+        description: recipe.description || '',
+        image: recipe.image_path
+          ? recipe.image_path.startsWith('/')
+            ? recipe.image_path
+            : `/images/${recipe.image_path}`
+          : null,
+        ingredients: Array.isArray(recipe.ingredients)
+          ? recipe.ingredients
+          : JSON.parse(recipe.ingredients || '[]'),
+        steps: Array.isArray(recipe.steps)
+          ? recipe.steps
+          : JSON.parse(recipe.steps || '[]'),
+        category: recipe.category?.name || recipe.category_id?.toString() || '',
+        region: recipe.region?.name || recipe.region_id?.toString() || 'unknown',
+        minPrice: recipe.min_price?.toString() || '0',
+        cookTime: recipe.cook_time || '',
+        prepTime: recipe.prep_time || '',
+        createdAt: recipe.created_at || new Date().toISOString(),
+        rating: recipe.rating || 0,
+        liked: recipe.liked || false,
+        userId: String(recipe.user_id),
+        visibleOn: recipe.visible_on || 'both',
+      }));
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch user recipes');
+    }
+  }
+);
 
 const recipesSlice = createSlice({
   name: 'recipes',
   initialState,
   reducers: {
+    resetStatus: (state) => {
+      state.status = 'idle';
+      state.error = null;
+    },
     toggleLike(state, action: PayloadAction<string>) {
       const recipe = state.recipes.find((r) => r.id === action.payload);
-      const recommendedRecipe = state.recommendedRecipes.find(
-        (r) => r.id === action.payload
-      );
+      const recommendedRecipe = state.recommendedRecipes.find((r) => r.id === action.payload);
       if (recipe) {
         recipe.liked = !recipe.liked;
       }
@@ -532,35 +980,18 @@ const recipesSlice = createSlice({
         recommendedRecipe.rating = rating;
       }
     },
-    addRecipe(state, action: PayloadAction<AddRecipePayload>) {
-      const newRecipe: Recipe = {
-        ...action.payload,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        rating: action.payload.rating ?? 0,
-        liked: action.payload.liked ?? false,
-        ingredients: action.payload.ingredients ?? [],
-        instructions: action.payload.instructions ?? '',
-        visibleOn: action.payload.visibleOn as VisibleOn,
-        region: action.payload.region ?? 'unknown',
-      };
-      state.recipes.push(newRecipe);
-    },
     removeRecipe(state, action: PayloadAction<string>) {
       state.recipes = state.recipes.filter((r) => r.id !== action.payload);
-      state.recommendedRecipes = state.recommendedRecipes.filter(
-        (r) => r.id !== action.payload
-      );
+      state.recommendedRecipes = state.recommendedRecipes.filter((r) => r.id !== action.payload);
     },
     updateRecipe(state, action: PayloadAction<Recipe>) {
       const index = state.recipes.findIndex((r) => r.id === action.payload.id);
-      const recommendedIndex = state.recommendedRecipes.findIndex(
-        (r) => r.id === action.payload.id
-      );
+      const recommendedIndex = state.recommendedRecipes.findIndex((r) => r.id === action.payload.id);
       if (index !== -1) {
         state.recipes[index] = {
           ...state.recipes[index],
           ...action.payload,
+          region: typeof action.payload.region === 'string' ? action.payload.region : state.recipes[index].region || 'unknown',
           createdAt: action.payload.createdAt ?? state.recipes[index].createdAt,
         };
       }
@@ -568,9 +999,8 @@ const recipesSlice = createSlice({
         state.recommendedRecipes[recommendedIndex] = {
           ...state.recommendedRecipes[recommendedIndex],
           ...action.payload,
-          createdAt:
-            action.payload.createdAt ??
-            state.recommendedRecipes[recommendedIndex].createdAt,
+          region: typeof action.payload.region === 'string' ? action.payload.region : state.recommendedRecipes[recommendedIndex].region || 'unknown',
+          createdAt: action.payload.createdAt ?? state.recommendedRecipes[recommendedIndex].createdAt,
         };
       }
     },
@@ -578,21 +1008,80 @@ const recipesSlice = createSlice({
       const region = action.payload.toLowerCase();
       state.recommendedRecipes = state.recipes.filter(
         (recipe) =>
-          (recipe.region?.toLowerCase() ?? 'unknown') === region &&
+          (typeof recipe.region === 'string' ? recipe.region.toLowerCase() : 'unknown') === region &&
           (recipe.visibleOn === 'welcome' || recipe.visibleOn === 'both')
       );
       state.status = 'succeeded';
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(addRecipeThunk.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(addRecipeThunk.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.recipes.push(action.payload);
+        state.userRecipes.push(action.payload);
+      })
+      .addCase(addRecipeThunk.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+      })
+      .addCase(deleteRecipeThunk.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(deleteRecipeThunk.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.recipes = state.recipes.filter((r) => r.id !== action.payload);
+        state.recommendedRecipes = state.recommendedRecipes.filter((r) => r.id !== action.payload);
+        state.userRecipes = state.userRecipes.filter((r) => r.id !== action.payload);
+      })
+      .addCase(deleteRecipeThunk.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+      })
+      .addCase(fetchRecipesThunk.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchRecipesThunk.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.recipes = [
+          ...initialRecipes,
+          ...action.payload.filter(
+            (fetched) => !initialRecipes.some((staticRecipe) => staticRecipe.id === fetched.id)
+          ),
+        ];
+      })
+      .addCase(fetchRecipesThunk.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+        state.recipes = [...initialRecipes];
+      })
+      .addCase(fetchUserRecipesThunk.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchUserRecipesThunk.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.userRecipes = action.payload;
+      })
+      .addCase(fetchUserRecipesThunk.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+      });
+  },
 });
 
 export const {
-  toggleLike,
-  setRating,
-  addRecipe,
+  toggleLike: toggleLikeAction,
+  setRating: setRatingAction,
   removeRecipe,
   updateRecipe,
   setRecommendedRecipes,
 } = recipesSlice.actions;
+export const { resetStatus } = recipesSlice.actions;
 
 export default recipesSlice.reducer;

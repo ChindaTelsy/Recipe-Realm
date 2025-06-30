@@ -4,10 +4,21 @@ import PrivacyPolicyModal from '@/components/common/PrivacyPolicyModal';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { usePathname } from 'next/navigation';
+
 
 export default function Footer() {
   const [isModalOpen, setModalOpen] = useState(false);
   const { t } = useTranslation('footer');
+
+    const isAuthenticated = useSelector((state: any) => state.user.isAuthenticated);
+  const pathname = usePathname();
+
+  const hideFooterRoutes = ['/Home', '/Profile', '/Add-Recipe']; // Add protected routes here
+  const isProtectedPage = hideFooterRoutes.includes(pathname);
+
+  if (isProtectedPage && !isAuthenticated) return null;
 
   return (
     <footer className="bg-gradient-to-b from-white to-white  py-6 mt-6 ">
