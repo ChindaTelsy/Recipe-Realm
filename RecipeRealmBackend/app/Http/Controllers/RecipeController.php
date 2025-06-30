@@ -12,22 +12,40 @@ use Illuminate\Support\Facades\Storage;
 
 class RecipeController extends Controller
 {
- public function index(Request $request)
+public function index(Request $request)
 {
     try {
         $user = Auth::user();
+
         if (!$user) {
-            return Recipe::with(['category', 'region', 'reviews'])
+            // Public users see only welcome-visible recipes
+            $recipes = Recipe::with(['category', 'region', 'reviews'])
                 ->whereIn('visible_on', ['welcome', 'both'])
                 ->get();
+        } else {
+            // Authenticated users see their own + home-visible recipes
+            $recipes = Recipe::with(['user', 'category', 'region', 'ratings', 'favoritedBy', 'reviews'])
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->orWhereIn('visible_on', ['home', 'both']);
+                })
+                ->get();
         }
-        return Recipe::with(['user', 'category', 'region', 'ratings', 'favoritedBy', 'reviews'])
-            ->where('user_id', $user->id)
-            ->orWhereIn('visible_on', ['home', 'both'])
-            ->get();
+
+        return response()->json([
+            'message' => 'Recipes fetched successfully',
+            'recipes' => $recipes,
+        ], 200);
+
     } catch (\Exception $e) {
-        Log::error('Recipe fetch error: ' . $e->getMessage());
-        return response()->json(['message' => 'Server error', 'error' => $e->getMessage()], 500);
+        Log::error('Recipe fetch error: ' . $e->getMessage(), [
+            'stack' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'message' => 'Server error',
+            'error' => $e->getMessage(),
+        ], 500);
     }
 }
 
@@ -133,6 +151,17 @@ $recipe->save();
             return response()->json(['message' => 'Server error', 'error' => $e->getMessage()], 500);
         }
     }
+
+    public function likeRecipe(Request $request, $recipeId)
+{
+    $user = $request->user();
+    if (!$user) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+    $recipe = Recipe::findOrFail($recipeId);
+    $user->likedRecipes()->toggle($recipeId); // Attach or detach
+    return response()->json(['message' => 'Like updated']);
+}
 
     public function destroy($id)
     {

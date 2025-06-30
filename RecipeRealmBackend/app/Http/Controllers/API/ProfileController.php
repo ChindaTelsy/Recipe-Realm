@@ -8,19 +8,15 @@ use App\Http\Resources\UserResource;
 
 class ProfileController extends Controller
 {
-    public function show(Request $request)
-    {
-        $user = $request->user();
-
-        if (!$user) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        // Load relationships
-        $user->load(['recipes', 'likedRecipes']); // Ensure likedRecipes relationship exists
-
-        return new UserResource($user);
+   public function show(Request $request)
+{
+    $user = $request->user();
+    if (!$user) {
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
+    $user->load(['recipes', 'likedRecipes']);
+    return new UserResource($user);
+}
 
     public function uploadImage(Request $request)
 {

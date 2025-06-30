@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use App\Http\Resources\UserResource;
 
 class AuthController extends BaseController
 {
@@ -49,7 +51,7 @@ class AuthController extends BaseController
 
         return response()->json([
                'user' => [
-        'uid' => (string) $user->id,
+        'id' =>  $user->id,
         'name' => $user->name,
         'email' => $user->email,
         'bio' => '',

@@ -36,9 +36,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    public function recipes(): HasMany
+    public function recipes()
     {
-        return $this->hasMany(Recipe::class);
+        return $this->hasMany(Recipe::class, 'user_id');
     }
 
     public function ratings(): HasMany
@@ -46,10 +46,10 @@ class User extends Authenticatable
         return $this->hasMany(Rating::class);
     }
 
-    public function favorites(): BelongsToMany
-    {
-        return $this->belongsToMany(Recipe::class, 'favorites')->withTimestamps();
-    }
+    // public function favorites(): BelongsToMany
+    // {
+    //     return $this->belongsToMany(Recipe::class, 'favorites', 'user_id', 'recipe_id')->withTimestamps();
+    // }
 
     public function sendPasswordResetNotification($token)
     {
@@ -62,7 +62,7 @@ class User extends Authenticatable
 }
 
 public function likedRecipes()
-{
-    return $this->belongsToMany(Recipe::class, 'recipe_user', 'user_id', 'recipe_id');
-}
+    {
+        return $this->belongsToMany(Recipe::class, 'favorites', 'user_id', 'recipe_id');
+    }
 }
