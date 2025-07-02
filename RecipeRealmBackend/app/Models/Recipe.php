@@ -60,4 +60,10 @@ class Recipe extends Model
 {
     return $this->hasMany(Review::class);
 }
+
+public function getImagePathAttribute($value)
+{
+    return $value ? asset('storage/' . $value) : null;
+}
+
 }

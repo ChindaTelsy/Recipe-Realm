@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
+
 class RecipeController extends Controller
 {
 public function index(Request $request)
@@ -31,6 +32,8 @@ public function index(Request $request)
                 })
                 ->get();
         }
+
+    
 
         return response()->json([
             'message' => 'Recipes fetched successfully',
@@ -152,15 +155,66 @@ $recipe->save();
         }
     }
 
-    public function likeRecipe(Request $request, $recipeId)
+public function likeRecipe(Request $request, Recipe $recipe)
 {
     $user = $request->user();
+
     if (!$user) {
         return response()->json(['message' => 'Unauthorized'], 401);
     }
-    $recipe = Recipe::findOrFail($recipeId);
-    $user->likedRecipes()->toggle($recipeId); // Attach or detach
-    return response()->json(['message' => 'Like updated']);
+
+    // Check if the recipe is already liked
+    $wasLiked = $user->likedRecipes()->where('recipe_id', $recipe->id)->exists();
+
+    // Toggle the like
+    $user->likedRecipes()->toggle($recipe->id);
+
+    // Refresh recipe relationships in case you need nested data
+    $recipe->load('region');
+
+    // Optional: Recalculate rating if you store rating separately
+
+    \Log::debug('Like toggled', [
+        'user_id' => $user->id,
+        'recipe_id' => $recipe->id,
+        'action' => $wasLiked ? 'unliked' : 'liked',
+    ]);
+
+    return response()->json([
+        'message' => $wasLiked ? 'Unliked' : 'Liked',
+        'liked' => !$wasLiked,
+        'recipe' => [
+            'id' => $recipe->id,
+            'title' => $recipe->title,
+            'image' => $recipe->image_path
+                ? (str_starts_with($recipe->image_path, 'http')
+                    ? $recipe->image_path
+                    : asset('storage/' . $recipe->image_path))
+                : asset('images/default-recipe.png'),
+            'description' => $recipe->description,
+            'rating' => $recipe->rating,
+            'region' => optional($recipe->region)->name,
+            'userId' => $recipe->user_id,
+            'liked' => !$wasLiked,
+        ],
+    ]);
+}
+
+
+public function rate(Recipe $recipe, Request $request)
+{
+    $request->validate([
+        'rating' => 'required|integer|min:1|max:5',
+    ]);
+
+    $user = $request->user();
+
+    $ratings = Rating::updateOrCreate(
+        ['user_id' => $user->id, 'recipe_id' => $recipe->id],
+        ['rating' => $request->rating]
+    );
+
+    return response()->json(['message' => 'Rated', 'rating' => $ratings->rating]);
 }
 
     public function destroy($id)

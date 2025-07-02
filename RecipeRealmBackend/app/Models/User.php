@@ -63,6 +63,6 @@ class User extends Authenticatable
 
 public function likedRecipes()
     {
-        return $this->belongsToMany(Recipe::class, 'favorites', 'user_id', 'recipe_id');
+        return $this->belongsToMany(Recipe::class, 'favorites', 'user_id', 'recipe_id')->withTimestamps();
     }
 }

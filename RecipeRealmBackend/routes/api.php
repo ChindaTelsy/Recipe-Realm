@@ -13,7 +13,10 @@ use App\Http\Controllers\API\ProfileController;
 Route::middleware('auth:sanctum')->get('/users', [UserController::class, 'index']);
 Route::get('/regions', [RegionController::class, 'index']);
 Route::middleware('auth:sanctum')->delete('/recipes/{id}', [RecipeController::class, 'destroy']);
-Route::middleware('auth:sanctum')->post('/recipes/{recipeId}/like', [RecipeController::class, 'likeRecipe']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/recipes/{recipe}/like', [RecipeController::class, 'likeRecipe']);
+    Route::post('/recipes/{recipe}/rate', [RecipeController::class, 'rate']);
+});
 Route::middleware('auth:sanctum')->get('/profile', [ProfileController::class, 'show']);
 Route::middleware('auth:sanctum')->post('/profile/upload-image', [ProfileController::class, 'uploadImage']);
 
