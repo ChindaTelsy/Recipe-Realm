@@ -4,6 +4,7 @@
     "welcome": "Welcome",
     "login": "Login",
     "signup": "Sign Up",
+    "logout": "logout",
     "toggleMenu": "Toggle menu"
   }
 }

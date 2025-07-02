@@ -35,7 +35,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
             };
 
             dispatch(setUser({
-              uid: user.uid,
+              id: user.uid,
               name: userData.name ?? '',
               bio: userData.bio ?? '',
               joinDate: userData.joinDate ?? '',

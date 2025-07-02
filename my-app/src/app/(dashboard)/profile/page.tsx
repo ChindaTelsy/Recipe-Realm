@@ -27,6 +27,8 @@ export default function ProfilePage() {
   const [editBio, setEditBio] = useState(user?.bio || '');
   const [editLocation, setEditLocation] = useState(user?.location || '');
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const stats = user?.stats || { recipes: 0, likes: 0, avgRating: 0 };
   const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
 
@@ -121,22 +123,49 @@ export default function ProfilePage() {
   };
 
   const handleDelete = (recipeId: string) => {
-    const authToken = token || localStorage.getItem('token');
-    if (!authToken) {
-      toast.error(t('profile.loginRequired'));
+    setShowDeleteModal(recipeId); // Show custom modal instead of confirm
+  };
+
+  const confirmDelete = async (recipeId: string) => {
+    if (!token) {
+      toast.error(t('profile.loginRequired', 'Please log in'));
+      setShowDeleteModal(null);
       return;
     }
-    if (!confirm(t('profile.confirmDelete'))) return;
 
-    dispatch(deleteRecipeThunk({ recipeId, token: authToken }))
-      .then(() => {
-        dispatch(fetchUser());
-        toast.success(t('profile.recipeDeleted'));
-      })
-      .catch((error) => {
-        toast.error(t('profile.deleteFailed'));
-        console.error('Delete error:', error);
-      });
+    setIsLoading(true);
+    // Optimistic update: Remove recipe from state immediately
+    if (user && activeTab === 'my') {
+      dispatch(
+        setUser({
+          ...user,
+          recipes: user.recipes?.filter((recipe) => recipe.id !== recipeId) || [],
+          stats: { ...user.stats, recipes: (user.stats.recipes || 0) - 1 },
+        })
+      );
+    } else if (user && activeTab === 'liked') {
+      dispatch(
+        setUser({
+          ...user,
+          likedRecipes: user.likedRecipes?.filter((recipe) => recipe.id !== recipeId) || [],
+          stats: { ...user.stats, likes: (user.stats.likes || 0) - 1 },
+        })
+      );
+    }
+
+    try {
+      await dispatch(deleteRecipeThunk({ recipeId, token })).unwrap();
+      await dispatch(fetchUser()).unwrap(); // Refresh user data to confirm
+      toast.success(t('profile.recipeDeleted', 'Recipe deleted successfully'));
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast.error(t('profile.deleteFailed', 'Failed to delete recipe'));
+      // Revert optimistic update on failure
+      await dispatch(fetchUser()).unwrap();
+    } finally {
+      setIsLoading(false);
+      setShowDeleteModal(null);
+    }
   };
 
   if (!user) return <div>{t('profile.loading')}</div>;
@@ -331,6 +360,38 @@ export default function ProfilePage() {
               <p className="col-span-full text-center text-gray-500">{t('profile.noRecipes')}</p>
             )}
           </div>
+
+                    {/* Custom Delete Confirmation Modal */}
+          {showDeleteModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t('profile.confirmDeleteTitle', 'Confirm Deletion')}
+                </h3>
+                <p className="text-gray-600 mt-2">
+                  {t('profile.confirmDelete', 'Are you sure you want to delete this recipe?')}
+                </p>
+                <div className="flex justify-end gap-3 mt-4">
+                  <button
+                    onClick={() => setShowDeleteModal(null)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition"
+                    aria-label={t('profile.cancel', 'Cancel')}
+                    disabled={isLoading}
+                  >
+                    {t('profile.cancel', 'Cancel')}
+                  </button>
+                  <button
+                    onClick={() => confirmDelete(showDeleteModal)}
+                    className="px-4 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition"
+                    aria-label={t('profile.delete', 'Delete')}
+                    disabled={isLoading}
+                  >
+                    {t('profile.delete', 'Delete')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </ProtectedRoute>

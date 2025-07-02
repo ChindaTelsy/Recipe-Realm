@@ -5,6 +5,7 @@ import { Recipe, VisibleOn } from '@/model/Recipe';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import axios from '../lib/axios';
 import { log } from 'console';
+import { fetchUser, updateLikedRecipes } from './UserSlice';
 
 interface RecipesState {
   recipes: Recipe[];
@@ -681,8 +682,27 @@ const initialRecipes: Recipe[] = [
     prepTime: '20 min',
     userId: '2',
   },
+
   {
     id: '37',
+    title: 'Couscous Royal',
+    description: 'North African couscous served with meat and vegetables.',
+    image: '/images/CouscousRoyal.jpeg',
+    rating: 4,
+    liked: false,
+    category: 'northAfrican',
+    createdAt: '2024-05-28T09:30:00Z',
+    visibleOn: 'both',
+    region: 'algeria',
+    ingredients: ['couscous', 'lamb', 'carrots', 'chickpeas', 'spices'],
+    steps: ['Steam couscous.', 'Cook lamb and vegetables.', 'Add spices.', 'Serve together.'],
+    minPrice: '1300',
+    cookTime: '60 min',
+    prepTime: '30 min',
+    userId: '1',
+  },
+  {
+    id: '38',
     title: 'Pancakes',
     description: 'Fluffy pancakes served with syrup.',
     image: '/images/pancakes.jpeg',
@@ -699,8 +719,42 @@ const initialRecipes: Recipe[] = [
     prepTime: '15 min',
     userId: '1',
   },
-
-
+  {
+    id: '39',
+    title: 'Ndomba',
+    description: 'Steamed fish with local spices wrapped in banana leaves.',
+    image: '/images/ndomba.webp',
+    rating: 5,
+    liked: false,
+    category: 'littoral',
+    createdAt: '2024-05-28T10:30:00Z',
+    visibleOn: 'both',
+    region: 'littoral',
+    ingredients: ['fish', 'spices', 'banana leaves', 'tomatoes', 'onions'],
+    steps: ['Season fish.', 'Wrap in banana leaves.', 'Steam with tomatoes.', 'Serve hot.'],
+    minPrice: '1500',
+    cookTime: '40 min',
+    prepTime: '20 min',
+    userId: '2',
+  },
+  {
+    id: '40',
+    title: 'kondre',
+    description: 'Hearty spiced plantain and meat stew.',
+    image: '/images/kondre.webp',
+    rating: 5,
+    liked: false,
+    category: 'west',
+    createdAt: '2024-05-28T11:00:00Z',
+    visibleOn: 'both',
+    region: 'turkey',
+    ingredients: ['plantains', 'beef', 'palm oil', 'onions', 'spices'],
+    steps: ['Boil plantains.', 'Cook beef with onions.', 'Add palm oil and spices.', 'Simmer and serve.'],
+    minPrice: '1200',
+    cookTime: '50 min',
+    prepTime: '30 min',
+    userId: '1',
+  },
 
 ];
 
@@ -785,20 +839,116 @@ export const addRecipeThunk = createAsyncThunk(
 
 export const toggleLike = createAsyncThunk(
   'recipes/toggleLike',
-  async (id: string, { getState, rejectWithValue }) => {
-    const state = getState() as { user: { token: string | null } };
+  async (
+    { id, isProfilePage }: { id: string; isProfilePage: boolean },
+    { getState, dispatch, rejectWithValue }
+  ) => {
+    const state = getState() as {
+      user: { user: any; token: string | null };
+      recipes: { recipes: any[] };
+    };
+
     const token = state.user.token;
     if (!token) {
       return rejectWithValue('No token found');
     }
+
+    // Find recipe from all sources
+    const allRecipes = [
+      ...(state.recipes.recipes || []),
+      ...(state.user.user?.recipes || []),
+      ...(state.user.user?.likedRecipes || [])
+    ];
+    const currentRecipe = allRecipes.find((r) => r.id === id);
+
+    if (!currentRecipe) {
+      console.error('Recipe not found in state:', id);
+      return rejectWithValue('Recipe not found in state');
+    }
+
+    console.log('toggleLike input:', { id, title: currentRecipe.title, isProfilePage });
+
+    // Optimistic update
+    if (isProfilePage && state.user.user) {
+      const isCurrentlyLiked = state.user.user.likedIds?.includes(id) ?? false;
+      let newLikedRecipes;
+
+      if (isCurrentlyLiked) {
+        newLikedRecipes = state.user.user.likedRecipes?.filter((r: any) => r.id !== id) || [];
+      } else {
+        const imageUrl =
+          currentRecipe.image ||
+          (currentRecipe.image_path
+            ? currentRecipe.image_path.startsWith('http')
+              ? currentRecipe.image_path
+              : `/storage/${currentRecipe.image_path}`
+            : '/default-recipe.png');
+
+        newLikedRecipes = [
+          ...(state.user.user.likedRecipes || []),
+          {
+            ...currentRecipe,
+            id,
+            liked: true,
+            image: imageUrl,
+          },
+        ];
+      }
+
+      console.log('Optimistic likedRecipes:', newLikedRecipes.map((r: any) => ({ id: r.id, title: r.title })));
+      dispatch(updateLikedRecipes(newLikedRecipes));
+    }
+
     try {
       const response = await axios.post(
         `/recipes/${id}/like`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return response.data;
+
+      const liked = response.data.liked ?? !currentRecipe.liked;
+      const backendRecipe = response.data.recipe;
+      const recipeData = backendRecipe
+        ? {
+            ...backendRecipe,
+            image:
+              backendRecipe.image ||
+              (backendRecipe.image_path
+                ? backendRecipe.image_path.startsWith('http')
+                  ? backendRecipe.image_path
+                  : `/storage/${backendRecipe.image_path}`
+                : '/default-recipe.png'),
+          }
+        : {
+            ...currentRecipe,
+            liked,
+            image: currentRecipe.image || '/default-recipe.png',
+          };
+
+      // Update likedRecipes with backend data
+      if (isProfilePage && state.user.user && recipeData) {
+        const isCurrentlyLiked = state.user.user.likedIds?.includes(id) ?? false;
+        const newLikedRecipes = isCurrentlyLiked
+          ? state.user.user.likedRecipes?.filter((r: any) => r.id !== id) || []
+          : [...(state.user.user.likedRecipes || []), recipeData];
+
+        console.log('Post-API likedRecipes:', newLikedRecipes.map((r: any) => ({ id: r.id, title: r.title })));
+        dispatch(updateLikedRecipes(newLikedRecipes));
+      }
+
+      const userResponse = await dispatch(fetchUser()).unwrap();
+      console.log('Post-fetchUser likedRecipes:', userResponse.likedRecipes?.map((r: any) => ({ id: r.id, title: r.title })));
+
+      if (!isProfilePage) {
+        await dispatch(fetchRecipesThunk({ isAuthenticated: !!token })).unwrap();
+      }
+
+      return { id, liked, recipe: recipeData };
     } catch (error: any) {
+      console.error('toggleLike error:', error.response?.data || error.message);
+      if (isProfilePage && state.user.user) {
+        await dispatch(fetchUser()).unwrap();
+      }
       return rejectWithValue(error.response?.data?.message || 'Failed to toggle like');
     }
   }
@@ -807,10 +957,10 @@ export const toggleLike = createAsyncThunk(
 export const setRating = createAsyncThunk(
   'recipes/setRating',
   async (
-    { id, rating }: { id: string; rating: number },
-    { getState, rejectWithValue }
+    { id, rating, isProfilePage }: { id: string; rating: number; isProfilePage: boolean },
+    { getState, dispatch, rejectWithValue }
   ) => {
-    const state = getState() as { user: { token: string | null } };
+    const state = getState() as { user: { token: string | null }; recipes: { recipes: any[] } };
     const token = state.user.token;
     if (!token) {
       return rejectWithValue('No token found');
@@ -821,12 +971,21 @@ export const setRating = createAsyncThunk(
         { rating },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      return response.data;
+      console.log('setRating response:', response.data); // Debug log
+      const newRating = response.data.rating ?? rating;
+      if (isProfilePage) {
+        await dispatch(fetchUser()).unwrap();
+      } else {
+        await dispatch(fetchRecipesThunk({ isAuthenticated: !!token })).unwrap();
+      }
+      return { id, rating: newRating };
     } catch (error: any) {
+      console.error('setRating error:', error.response?.data || error.message);
       return rejectWithValue(error.response?.data?.message || 'Failed to set rating');
     }
   }
 );
+
 
 export const deleteRecipeThunk = createAsyncThunk(
   'recipes/deleteRecipe',
@@ -854,7 +1013,7 @@ export const fetchRecipesThunk = createAsyncThunk(
         if (!token) {
           console.log('No token found');
           return rejectWithValue('No authentication token found. Please log in.');
-        }
+        } 
         headers.Authorization = `Bearer ${token}`;
       }
 
@@ -875,9 +1034,9 @@ export const fetchRecipesThunk = createAsyncThunk(
         title: recipe.title || '',
         description: recipe.description || '',
         image: recipe.image_path
-          ? recipe.image_path.startsWith('/')
+          ? recipe.image_path.startsWith('http') // full URL already?
             ? recipe.image_path
-            : `/images/${recipe.image_path}`
+            : `/storage/${recipe.image_path}`
           : null,
         ingredients: Array.isArray(recipe.ingredients)
           ? recipe.ingredients
@@ -940,9 +1099,9 @@ export const fetchUserRecipesThunk = createAsyncThunk(
         title: recipe.title || '',
         description: recipe.description || '',
         image: recipe.image_path
-          ? recipe.image_path.startsWith('/')
-            ? recipe.image_path
-            : `/images/${recipe.image_path}`
+          ? recipe.image_path.startsWith('http')
+            ? recipe.image_path // Use full URL as-is
+            : `${process.env.NEXT_PUBLIC_BACKEND_URL}/storage/${recipe.image_path}` // Prepend backend URL
           : null,
         ingredients: Array.isArray(recipe.ingredients)
           ? recipe.ingredients
@@ -1007,6 +1166,15 @@ const recipesSlice = createSlice({
         recommendedRecipe.rating = rating;
       }
     },
+    updateRecipeFields: (state, action: PayloadAction<{ id: string; liked?: boolean; rating?: number }>) => {
+      const { id, liked, rating } = action.payload;
+      const recipe = state.recipes.find(r => r.id === id);
+      if (recipe) {
+        if (liked !== undefined) recipe.liked = liked;
+        if (rating !== undefined) recipe.rating = rating;
+      }
+    },
+
     removeRecipe(state, action: PayloadAction<string>) {
       state.recipes = state.recipes.filter((r) => r.id !== action.payload);
       state.recommendedRecipes = state.recommendedRecipes.filter((r) => r.id !== action.payload);
@@ -1095,9 +1263,25 @@ const recipesSlice = createSlice({
         state.status = 'succeeded';
         state.userRecipes = action.payload;
       })
+
       .addCase(fetchUserRecipesThunk.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload as string;
+      })
+      .addCase(toggleLike.fulfilled, (state, action) => {
+        const { id, liked } = action.payload;
+        const recipe = state.recipes.find((r) => r.id === id);
+        if (recipe) {
+          recipe.liked = liked;
+        }
+        console.log('toggleLike fulfilled:', { id, liked, title: recipe?.title, recipes: state.recipes }); // Debug log
+      })
+      .addCase(setRating.fulfilled, (state, action) => {
+        const { id, rating } = action.payload;
+        const recipe = state.recipes.find((r) => r.id === id);
+        if (recipe) {
+          recipe.rating = rating;
+        }
       });
   },
 });
@@ -1107,6 +1291,7 @@ export const {
   setRating: setRatingAction,
   removeRecipe,
   updateRecipe,
+  updateRecipeFields,
   setRecommendedRecipes,
 } = recipesSlice.actions;
 export const { resetStatus } = recipesSlice.actions;

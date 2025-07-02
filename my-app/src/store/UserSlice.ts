@@ -157,18 +157,18 @@ export const register = createAsyncThunk<
 
 export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
   'user/logout',
-  async (_, { rejectWithValue, getState }) => {
+  async (_, { rejectWithValue }) => {
     try {
-      const state = getState() as { user: UserState };
-      const token = state.user.token;
+      const token = localStorage.getItem('token');
       if (token) {
         await axios.post('/logout', {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
+
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      console.log('Logout successful');
+      return;
     } catch (error: any) {
       console.error('Logout failed:', error.response?.data);
       return rejectWithValue(error.response?.data?.message || 'Logout failed');
@@ -176,7 +176,7 @@ export const logout = createAsyncThunk<void, void, { rejectValue: string }>(
   }
 );
 
-const userSlice = createSlice({
+export const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
@@ -191,17 +191,31 @@ const userSlice = createSlice({
         recipes: action.payload.recipes ?? [],
         likedRecipes: action.payload.likedRecipes ?? [],
       };
+      state.isAuthenticated = true;
+      localStorage.setItem('user', JSON.stringify(action.payload));
     },
     setToken(state, action: PayloadAction<string>) {
       state.token = action.payload;
       state.isAuthenticated = true;
+      localStorage.setItem('token', action.payload);
     },
     clearUser(state) {
       state.user = null;
       state.token = null;
       state.status = 'idle';
       state.error = null;
+      state.isAuthenticated = false;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
+    updateLikedRecipes(state, action) {
+      if (state.user) {
+        state.user.likedRecipes = action.payload;
+        state.user.stats = {
+          ...state.user.stats,
+          likes: action.payload.length,
+        };
+      }
     },
     updateProfileImage(state, action: PayloadAction<string>) {
       if (state.user) {
@@ -284,15 +298,14 @@ const userSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(logout.fulfilled, (state) => {
-        state.loading = false;
+        .addCase(logout.fulfilled, (state) => {
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
       })
       .addCase(logout.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
+        console.error('Logout rejected:', action.payload);
+        state.error = action.payload || 'Logout failed';
       })
      .addCase(fetchUser.fulfilled, (state, action) => {
       state.user = action.payload;
@@ -313,6 +326,7 @@ export const {
   setToken,
   clearUser,
   updateProfileImage,
+  updateLikedRecipes,
   updateBio,
   addRecipe,
   setRegion,

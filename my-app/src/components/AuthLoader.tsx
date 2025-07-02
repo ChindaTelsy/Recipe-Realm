@@ -10,7 +10,6 @@ import axios from '@/lib/axios';
 export default function AuthLoader() {
   const dispatch = useDispatch<ThunkDispatch<unknown, unknown, AnyAction>>();
 
-
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -34,23 +33,22 @@ export default function AuthLoader() {
 
         dispatch(setToken(token));
       } catch {
-        // Clear corrupted localStorage
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         return;
       }
     }
 
-    // Optional: re-validate with API if token exists
+    // Optional: API revalidation
     if (token) {
       axios.get('/me', {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
         },
       })
-        .then(res => {
+        .then((res) => {
           const data = res.data;
+
           dispatch(setUser({
             ...data,
             stats: {
@@ -62,12 +60,17 @@ export default function AuthLoader() {
             likedRecipes: data.likedRecipes ?? [],
           }));
         })
-        .catch(() => {
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
+        .catch((err) => {
+          if (err.response?.status === 401) {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            console.warn('AuthLoader: Token expired or unauthorized, clearing local storage');
+          } else {
+            console.warn('AuthLoader: Auth check failed (but not 401):', err.message);
+          }
         });
     }
   }, [dispatch]);
 
-  return null; // No UI rendered
+  return null; // no UI rendered
 }

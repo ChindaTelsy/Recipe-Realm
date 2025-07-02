@@ -31,6 +31,7 @@ export default function AddRecipePage() {
   const [openStep, setOpenStep] = useState<number | null>(null);
   const [regions, setRegions] = useState<{ value: string; label: string }[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -89,11 +90,9 @@ export default function AddRecipePage() {
 
   useEffect(() => {
     if (isSubmitted && status === 'succeeded') {
-      toast.success(t('addRecipe.successMessage', { defaultValue: 'Recipe added successfully!' }));
-      setTimeout(() => {
-        setIsSubmitted(false);
-        router.push('/Home');
-      }, 2000);
+      setShowSuccessModal(true); // Show success modal
+      setIsSubmitted(false);
+      // Form is already reset in handleSubmit
     } else if (status === 'failed' && error) {
       const errorMsg =
         error === 'Recipe ID is missing in response'
@@ -106,7 +105,7 @@ export default function AddRecipePage() {
       setErrorMessage(errorMsg);
       toast.error(errorMsg);
     }
-  }, [status, error, isSubmitted, router, t]);
+  }, [status, error, isSubmitted, t]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -150,6 +149,22 @@ export default function AddRecipePage() {
 
   const toggleStep = (index: number) => {
     setOpenStep(openStep === index ? null : index);
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setIngredientsInput('');
+    setSteps(['']);
+    setCategory('');
+    setRegion('');
+    setMinPrice('');
+    setCookTime('');
+    setPrepTime('');
+    setImage(null);
+    setPreview(null);
+    setOpenStep(null);
+    setShowSuccessModal(false);
   };
 
   const handleSubmit = useCallback(
@@ -208,7 +223,7 @@ export default function AddRecipePage() {
       formData.append('prep_time', trimmedPrepTime);
       formData.append('visible_on', 'both');
       if (image instanceof File) {
-        formData.append('image_path', image); // Ensure the field name matches backend
+        formData.append('image_path', image);
         console.log('Uploading image:', image.name, 'size:', image.size, 'type:', image.type);
       }
 
@@ -216,42 +231,32 @@ export default function AddRecipePage() {
 
       try {
         const result = await dispatch(addRecipeThunk({ recipeData: formData, token })).unwrap();
-        console.log('Recipe created with response:', result); // Debug full response
+        console.log('Recipe created with response:', result);
         if (result && 'image_path' in result) {
           console.log('Image path returned:', result.image_path);
         } else {
           console.log('No image_path returned in response, received:', result);
         }
         setIsSubmitted(true);
-        setTitle('');
-        setDescription('');
-        setIngredientsInput('');
-        setSteps(['']);
-        setCategory('');
-        setRegion('');
-        setMinPrice('');
-        setCookTime('');
-        setPrepTime('');
-        setImage(null);
-        setPreview(null);
-        setOpenStep(null);
-      }catch (error: any) {
-  console.error('Full error in handleSubmit:', error);
-  const errorMsg =
-    error === 'Recipe ID is missing in response'
-      ? t('addRecipe.alertInvalidResponse', { defaultValue: 'Invalid response from server. Please try again.' })
-      : error.includes?.('Unauthenticated')
-        ? t('addRecipe.alertUnauthorized', { defaultValue: 'Your session has expired. Please log in again.' })
-        : error.includes?.('Validation error')
-          ? t('addRecipe.alertValidationError', { defaultValue: error.message || 'Invalid input data.' })
-          : t('addRecipe.alertServerError', { defaultValue: error.message || 'An unexpected error occurred.' });
-  setErrorMessage(errorMsg);
-  toast.error(errorMsg);
-  if (errorMsg.includes('Unauthenticated')) {
-    localStorage.removeItem('token');
-    console.log('Token removed due to Unauthenticated error');
-  }
-}
+        // Reset form fields immediately after successful submission
+        resetForm();
+      } catch (error: any) {
+        console.error('Full error in handleSubmit:', error);
+        const errorMsg =
+          error === 'Recipe ID is missing in response'
+            ? t('addRecipe.alertInvalidResponse', { defaultValue: 'Invalid response from server. Please try again.' })
+            : error.includes?.('Unauthenticated')
+            ? t('addRecipe.alertUnauthorized', { defaultValue: 'Your session has expired. Please log in again.' })
+            : error.includes?.('Validation error')
+            ? t('addRecipe.alertValidationError', { defaultValue: error.message || 'Invalid input data.' })
+            : t('addRecipe.alertServerError', { defaultValue: error.message || 'An unexpected error occurred.' });
+        setErrorMessage(errorMsg);
+        toast.error(errorMsg);
+        if (errorMsg.includes('Unauthenticated')) {
+          localStorage.removeItem('token');
+          console.log('Token removed due to Unauthenticated error');
+        }
+      }
     },
     [
       title,
@@ -265,7 +270,6 @@ export default function AddRecipePage() {
       prepTime,
       image,
       dispatch,
-      router,
       t,
     ]
   );
@@ -479,6 +483,43 @@ export default function AddRecipePage() {
               {status === 'loading' ? t('addRecipe.form.submitting') : t('addRecipe.form.submit')}
             </button>
           </form>
+
+          {showSuccessModal && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-4 transform transition-all duration-300 ease-in-out scale-100">
+                <div className="flex items-center justify-center mb-4">
+                  <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 text-center">
+                  {t('addRecipe.successTitle', { defaultValue: 'Recipe Added!' })}
+                </h3>
+                <p className="text-gray-600 mt-2 text-center">
+                  {t('addRecipe.successMessage', { defaultValue: 'Your recipe has been successfully added to the collection.' })}
+                </p>
+                <div className="flex justify-center gap-4 mt-6">
+                  <button
+                    onClick={resetForm}
+                    className="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold transition transform hover:scale-105"
+                    aria-label={t('addRecipe.addAnother', { defaultValue: 'Add Another Recipe' })}
+                  >
+                    {t('addRecipe.addAnother', { defaultValue: 'Add Another' })}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSuccessModal(false);
+                      router.push('/Home');
+                    }}
+                    className="px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full font-semibold transition transform hover:scale-105"
+                    aria-label={t('addRecipe.viewHome', { defaultValue: 'View Homepage' })}
+                  >
+                    {t('addRecipe.viewHome', { defaultValue: 'View Homepage' })}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </ProtectedRoute>
