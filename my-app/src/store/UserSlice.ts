@@ -262,7 +262,7 @@ export const userSlice = createSlice({
       //   state.loading = false;
       //   state.error = action.payload as string;
       // })
-       .addCase(login.fulfilled, (state, action) => {
+      .addCase(login.fulfilled, (state, action) => {
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
@@ -279,7 +279,7 @@ export const userSlice = createSlice({
       //   state.status = 'loading';
       //   state.error = null;
       // })
-     
+
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -298,26 +298,28 @@ export const userSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-        .addCase(logout.fulfilled, (state) => {
+      .addCase(logout.fulfilled, (state) => {
+        state.loading = false;
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
       })
       .addCase(logout.rejected, (state, action) => {
+        state.loading = false;
         console.error('Logout rejected:', action.payload);
         state.error = action.payload || 'Logout failed';
       })
-     .addCase(fetchUser.fulfilled, (state, action) => {
-      state.user = action.payload;
-      state.isAuthenticated = true;
-      state.status = 'succeeded';
-    })
-    .addCase(fetchUser.rejected, (state, action) => {
-      state.status = 'failed';
-      state.error = action.payload as string;
-    });
-    
-      
+      .addCase(fetchUser.fulfilled, (state, action) => {
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        state.status = 'succeeded';
+      })
+      .addCase(fetchUser.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload as string;
+      });
+
+
   },
 });
 

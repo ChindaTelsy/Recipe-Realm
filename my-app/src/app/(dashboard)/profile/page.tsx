@@ -31,6 +31,7 @@ export default function ProfilePage() {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const stats = user?.stats || { recipes: 0, likes: 0, avgRating: 0 };
   const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
+  const [fallback, setFallback] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !user) {
@@ -46,11 +47,26 @@ export default function ProfilePage() {
     }
   }, [dispatch, user]);
 
-
+  // Debug logging for user state
   useEffect(() => {
     console.log('User state:', user, 'Stats:', user?.stats, 'Recipes:', user?.recipes, 'Liked Recipes:', user?.likedRecipes);
   }, [user]);
 
+
+  // const getImageSrc = (recipe: Recipe) => {
+  //   // If full URL (http://...), return it directly
+  //   if (recipe.image?.startsWith('http')) {
+  //     return recipe.image;
+  //   }
+
+  //   // If image is just a filename (e.g., "my-dish.jpg")
+  //   if (recipe.image) {
+  //     return `http://localhost:8000/storage/recipes/${recipe.image}`;
+  //   }
+
+  //   // Fallback image
+  //   return 'http://localhost:8000/storage/recipes/default-recipe.png';
+  // };
 
   const formattedJoinDate = useMemo(() => {
     if (!user?.joinDate) return t('profile.noDate');
@@ -123,7 +139,7 @@ export default function ProfilePage() {
   };
 
   const handleDelete = (recipeId: string) => {
-    setShowDeleteModal(recipeId); // Show custom modal instead of confirm
+    setShowDeleteModal(recipeId);
   };
 
   const confirmDelete = async (recipeId: string) => {
@@ -134,7 +150,7 @@ export default function ProfilePage() {
     }
 
     setIsLoading(true);
-    // Optimistic update: Remove recipe from state immediately
+    // Optimistic update
     if (user && activeTab === 'my') {
       dispatch(
         setUser({
@@ -155,12 +171,11 @@ export default function ProfilePage() {
 
     try {
       await dispatch(deleteRecipeThunk({ recipeId, token })).unwrap();
-      await dispatch(fetchUser()).unwrap(); // Refresh user data to confirm
+      await dispatch(fetchUser()).unwrap();
       toast.success(t('profile.recipeDeleted', 'Recipe deleted successfully'));
     } catch (error: any) {
       console.error('Delete error:', error);
       toast.error(t('profile.deleteFailed', 'Failed to delete recipe'));
-      // Revert optimistic update on failure
       await dispatch(fetchUser()).unwrap();
     } finally {
       setIsLoading(false);
@@ -183,6 +198,7 @@ export default function ProfilePage() {
                   alt={t('profile.imageAlt')}
                   fill
                   className="rounded-full object-cover border-4 border-white shadow-md"
+                  unoptimized={user.profileImage.startsWith('http')}
                 />
               ) : (
                 <FaUserCircle className="w-full h-full text-gray-400 border-4 border-white shadow-md rounded-full" />
@@ -215,7 +231,7 @@ export default function ProfilePage() {
                   <textarea
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value)}
-                    className="w-full px-4 py-2 text-gray-700 bg-transparent border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
+                    className="w-full px-4 py-2 text-gray-700 bg-transparent border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 Twilight"
                     placeholder={t('profile.bio')}
                     rows={3}
                   />
@@ -307,8 +323,62 @@ export default function ProfilePage() {
           </div>
 
           {/* Recipes Grid */}
-          
-                    {/* Custom Delete Confirmation Modal */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(activeTab === 'my' ? user.recipes ?? [] : user.likedRecipes ?? []).length > 0 ? (
+              (activeTab === 'my' ? user.recipes ?? [] : user.likedRecipes ?? []).map((recipe: Recipe) => {
+                if (!recipe.id || !recipe.title) {
+                  console.error('Invalid recipe data:', recipe);
+                  return null;
+                }
+                return (
+                  <div
+                    key={recipe.id}
+                    className="relative rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md shadow-lg border border-white/20 hover:scale-105 transition-transform"
+                  >
+                    <div className="relative w-full h-48">
+                      <Image
+                        src={recipe.image}
+                        alt={recipe.title}
+                        onError={e => e.currentTarget.src = '/images/default-recipe.png'}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 truncate">{recipe.title}</h3>
+                      <p className="text-sm text-gray-600 truncate">{recipe.description || t('profile.noDescription')}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {t('profile.createdBy')}: {user.name}
+                      </p>
+                      <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <span>⭐</span> {recipe.rating?.toFixed(1) || '0.0'}
+                        </span>
+                        {recipe.region && (
+                          <span className="text-xs text-gray-500">{recipe.region}</span>
+                        )}
+                      </div>
+                      {activeTab === 'my' && recipe.userId === user?.id && (
+                        <button
+                          onClick={() => handleDelete(recipe.id)}
+                          className="mt-2 w-full text-red-600 hover:text-red-800 text-sm text-center"
+                          aria-label={t('profile.deleteRecipe')}
+                        >
+                          {t('profile.delete')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="col-span-full text-center text-gray-500">{t('profile.noRecipes')}</p>
+            )}
+          </div>
+
+          {/* Custom Delete Confirmation Modal */}
           {showDeleteModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
