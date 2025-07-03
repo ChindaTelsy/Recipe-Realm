@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Rating;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -209,12 +210,20 @@ public function rate(Recipe $recipe, Request $request)
 
     $user = $request->user();
 
-    $ratings = Rating::updateOrCreate(
-        ['user_id' => $user->id, 'recipe_id' => $recipe->id],
-        ['rating' => $request->rating]
+    $rating = Rating::updateOrCreate(
+        [
+            'user_id' => $user->id,
+            'recipe_id' => $recipe->id,
+        ],
+        [
+            'score' => $request->rating  // ✅ Must match actual DB column name
+        ]
     );
 
-    return response()->json(['message' => 'Rated', 'rating' => $ratings->rating]);
+    return response()->json([
+        'message' => 'Rated',
+        'rating' => $rating->score  // Also update here to return the right field
+    ]);
 }
 
     public function destroy($id)
