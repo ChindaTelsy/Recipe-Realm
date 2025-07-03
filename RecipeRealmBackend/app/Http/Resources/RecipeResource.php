@@ -12,7 +12,11 @@ class RecipeResource extends JsonResource
             'id'          => $this->id,
             'title'       => $this->title,
             'description' => $this->description,
-            'image' => $this->image ? asset($this->image) : null,
+            'image' => $this->image_path 
+                ? (str_starts_with($this->image_path, 'http') 
+                    ? $this->image_path 
+                    : asset('storage/' . $this->image_path)) 
+                : asset('images/default-recipe.png'),
             'ingredients' => is_string($this->ingredients) 
                 ? json_decode($this->ingredients, true) 
                 : $this->ingredients,
