@@ -5,7 +5,7 @@ export interface Recipe {
   title: string;
   description?: string;
   image: string;
-  // image_path?: string;
+  image_path?: string;
   rating: number;
   liked?: boolean;
   likes?: number;

@@ -26,8 +26,9 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [localLiked, setLocalLiked] = useState<boolean>(liked || false);
+  const [localRating, setLocalRating] = useState<number>(rating || 0);
 
-  // const imageSrc = recipe.image || '/default-recipe.png';
+  const imageSrc = image || '/default-recipe.png';
 
   const categoryKeys = [
     { id: 14, name: 'Vegetarian' },
@@ -42,16 +43,23 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
 
   const categoryName = categoryKeys.find((cat) => cat.id === parseInt(category as string))?.name || (category as string);
 
-  // Initialize localLiked from localStorage for unauthenticated users
+  // Initialize localLiked and localRating from localStorage for unauthenticated users
   useEffect(() => {
     if (!token) {
+      // Handle likes
       const storedLikes = localStorage.getItem('recipeLikes');
       const likedRecipes = storedLikes ? JSON.parse(storedLikes) : {};
       setLocalLiked(!!likedRecipes[id]);
+
+      // Handle ratings
+      const storedRatings = localStorage.getItem('recipeRatings');
+      const ratedRecipes = storedRatings ? JSON.parse(storedRatings) : {};
+      setLocalRating(ratedRecipes[id] || 0);
     } else {
       setLocalLiked(liked || false);
+      setLocalRating(rating || 0);
     }
-  }, [id, liked, token]);
+  }, [id, liked, rating, token]);
 
   const handleDelete = () => {
     if (!token) {
@@ -86,7 +94,7 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
 
     if (token) {
       // Authenticated user: Update like via Redux and API
-      console.log('Liking recipe (authenticated):', { id, title, image: image, isProfilePage });
+      console.log('Liking recipe (authenticated):', { id, title, image: imageSrc, isProfilePage });
       dispatch(updateRecipeFields({ id, liked: !liked }));
 
       try {
@@ -94,7 +102,7 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
         toast.success(t('recipe.likeToggled', liked ? 'Recipe unliked' : 'Recipe liked'));
         setLocalLiked(!liked);
       } catch (error: any) {
-        dispatch(updateRecipeFields({ id, liked: !liked }));
+        dispatch(updateRecipeFields({ id, liked }));
         toast.error(t('recipe.likeFailed', 'Failed to toggle like'));
         console.error('Like error:', error);
       } finally {
@@ -120,25 +128,42 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
   };
 
   const handleRate = async (newRating: number) => {
-    if (!token) {
-      toast.error(t('recipe.loginRequired', 'You must be logged in to rate a recipe.'));
-      return;
-    }
+  setIsLoading(true);
 
-    setIsLoading(true);
+  if (token) {
+    // Optimistic update
     dispatch(updateRecipeFields({ id, rating: newRating }));
 
     try {
-      await dispatch(setRating({ id: id as string, rating: newRating, isProfilePage })).unwrap();
+      const response = await dispatch(
+        setRating({ id: id as string, rating: newRating, isProfilePage })
+      ).unwrap();
+
+      const confirmedRating = response.rating ?? newRating;
+      dispatch(updateRecipeFields({ id, rating: confirmedRating }));
+      setLocalRating(confirmedRating);
       toast.success(t('recipe.ratingSet', 'Rating submitted'));
     } catch (error: any) {
-      dispatch(updateRecipeFields({ id, rating: newRating }));
+      // Revert on error
+      dispatch(updateRecipeFields({ id, rating }));
+      setLocalRating(rating); // revert to old one
       toast.error(t('recipe.ratingFailed', 'Failed to set rating'));
       console.error('Rate error:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  } else {
+    // For unauthenticated users
+    const storedRatings = localStorage.getItem('recipeRatings');
+    const ratedRecipes = storedRatings ? JSON.parse(storedRatings) : {};
+    ratedRecipes[id] = newRating;
+
+    localStorage.setItem('recipeRatings', JSON.stringify(ratedRecipes));
+    setLocalRating(newRating);
+    toast.success(t('recipe.ratingSet', 'Rating submitted'));
+    setIsLoading(false);
+  }
+};
 
   const isOwner = userId && currentUserId ? userId === currentUserId : false;
 
@@ -147,11 +172,12 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
       <Link href={`/recipes/${id}`}>
         <div className="relative w-full h-48">
           <Image
-            src={recipe.image || '/default-recipe.png'}
-            alt={recipe.title}
+            src={imageSrc}
+            alt={title}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover"
+            onError={() => console.error('Image load failed:', imageSrc)}
           />
         </div>
       </Link>
@@ -178,8 +204,8 @@ export default function RecipeCard({ recipe, isProfilePage = false, className }:
               disabled={isLoading}
             >
               <Star
-                className={`w-4 h-4 ${idx < (rating || 0) ? 'fill-yellow-400' : 'stroke-yellow-400'} ${isLoading ? 'opacity-50' : ''}`}
-                fill={idx < (rating || 0) ? '#FBBF24' : 'none'}
+                className={`w-4 h-4 ${idx < localRating ? 'fill-yellow-400' : 'stroke-yellow-400'} ${isLoading ? 'opacity-50' : ''}`}
+                fill={idx < localRating ? '#FBBF24' : 'none'}
               />
             </button>
           ))}

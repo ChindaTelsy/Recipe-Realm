@@ -960,32 +960,32 @@ export const setRating = createAsyncThunk(
     { id, rating, isProfilePage }: { id: string; rating: number; isProfilePage: boolean },
     { getState, dispatch, rejectWithValue }
   ) => {
-    const state = getState() as { user: { token: string | null }; recipes: { recipes: any[] } };
+    const state = getState() as { user: { token: string | null } };
     const token = state.user.token;
     if (!token) {
       return rejectWithValue('No token found');
     }
+
     try {
       const response = await axios.post(
         `/recipes/${id}/rate`,
-        { rating },
+        { rating }, // ✅ Correct field name expected by Laravel backend
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('setRating response:', response.data); // Debug log
-      const newRating = response.data.rating ?? rating;
+
+      // Refresh data after rating
       if (isProfilePage) {
         await dispatch(fetchUser()).unwrap();
       } else {
         await dispatch(fetchRecipesThunk({ isAuthenticated: !!token })).unwrap();
       }
-      return { id, rating: newRating };
+
+      return { id, rating: response.data.rating }; // Make sure backend returns 'rating'
     } catch (error: any) {
-      console.error('setRating error:', error.response?.data || error.message);
       return rejectWithValue(error.response?.data?.message || 'Failed to set rating');
     }
   }
 );
-
 
 export const deleteRecipeThunk = createAsyncThunk(
   'recipes/deleteRecipe',

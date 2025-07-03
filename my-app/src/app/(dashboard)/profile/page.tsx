@@ -307,60 +307,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Recipes Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {(activeTab === 'my' ? user.recipes ?? [] : user.likedRecipes ?? []).length > 0 ? (
-              (activeTab === 'my' ? user.recipes ?? [] : user.likedRecipes ?? []).map((recipe: Recipe) => {
-                if (!recipe.id) {
-                  console.error('Recipe missing id:', recipe);
-                  return null;
-                }
-                return (
-                  <div
-                    key={recipe.id}
-                    className="relative rounded-2xl overflow-hidden bg-white/80 backdrop-blur-md shadow-lg border border-white/20 hover:scale-105 transition-transform"
-                  >
-                    <div className="relative w-full h-48">
-                      <Image
-                        src={recipe.image || '/default-recipe.png'}
-                        alt={recipe.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">{recipe.title}</h3>
-                      <p className="text-sm text-gray-600 truncate">{recipe.description || t('profile.noDescription')}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {t('profile.createdBy')}: {user.name}
-                      </p>
-                      <div className="flex items-center justify-between mt-2 text-sm text-gray-600">
-                        <span className="flex items-center gap-1">
-                          <span>⭐</span> {recipe.rating?.toFixed(1) || '0.0'}
-                        </span>
-                        {recipe.region && (
-                          <span className="text-xs text-gray-500">{recipe.region}</span>
-                        )}
-                      </div>
-                      {activeTab === 'my' && recipe.userId === user?.id && (
-                        <button
-                          onClick={() => handleDelete(recipe.id)}
-                          className="mt-2 w-full text-red-600 hover:text-red-800 text-sm text-center"
-                          aria-label={t('profile.deleteRecipe')}
-                        >
-                          {t('profile.delete')}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <p className="col-span-full text-center text-gray-500">{t('profile.noRecipes')}</p>
-            )}
-          </div>
-
+          
                     {/* Custom Delete Confirmation Modal */}
           {showDeleteModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
